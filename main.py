@@ -20,24 +20,10 @@ def create_app():
     rect = patches.Rectangle((0, 0), 640, toolbar_height, color='#e0e0e0', zorder=10)
     ax.add_patch(rect)
 
-    # Close Icon (X)
-    close_button_size = 20
-    close_button_padding = 10
-    close_x = 640 - close_button_size - close_button_padding
-    close_y = (toolbar_height - close_button_size) / 2
-    
-    # Line 1 of X
-    ax.plot([close_x, close_x + close_button_size], 
-            [close_y, close_y + close_button_size], 
-            color='red', linewidth=3, zorder=20)
-    
-    # Line 2 of X
-    ax.plot([close_x + close_button_size, close_x], 
-            [close_y, close_y + close_button_size], 
-            color='red', linewidth=3, zorder=20)
-
+       
+   
     # Hello World Text
-    ax.text(320, 240, "Hello World", color='blue', fontsize=40, 
+    ax.text(320, 240, "Hello World!", color='blue', fontsize=40, 
             ha='center', va='center', zorder=5)
 
     def on_click(event):
