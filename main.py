@@ -1,41 +1,44 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import sys
+from loader import load_nodes_from_yaml
 
 def create_app():
     # Set window size (roughly matching 640x480)
-    # Matplotlib uses inches, default dpi is usually 100
     fig, ax = plt.subplots(figsize=(6.4, 4.8), dpi=100)
     fig.canvas.manager.set_window_title('Prespace')
     
-    # Hide axes
-    ax.set_xlim(0, 640)
-    ax.set_ylim(0, 480)
+    # Set limits for node data (0-100 range from generator) plus some padding
+    ax.set_xlim(-5, 105)
+    ax.set_ylim(-5, 105)
+    ax.set_aspect('equal')
     ax.axis('off')
-    # Invert Y axis to match typical screen coordinates (0 at top)
-    ax.invert_yaxis()
 
-    # Toolbar (Grey Rectangle)
-    toolbar_height = 40
-    rect = patches.Rectangle((0, 0), 640, toolbar_height, color='#e0e0e0', zorder=10)
-    ax.add_patch(rect)
+    # Load nodes
+    nodes = load_nodes_from_yaml('nodes.yaml')
 
-       
-   
-    # Hello World Text
-    ax.text(320, 240, "Hello World!", color='blue', fontsize=40, 
-            ha='center', va='center', zorder=5)
+    # Plot connections
+    seen_connections = set()
+    for node in nodes:
+        for other in node.connections:
+            # Sort IDs to avoid drawing the same line twice
+            conn = tuple(sorted((node.id, other.id)))
+            if conn not in seen_connections:
+                ax.plot([node.x, other.x], [node.y, other.y], 
+                        color='gray', linewidth=0.5, alpha=0.5, zorder=1)
+                seen_connections.add(conn)
 
-    def on_click(event):
-        if event.xdata is not None and event.ydata is not None:
-            # Check if click is within the close button area
-            if (close_x <= event.xdata <= close_x + close_button_size and 
-                close_y <= event.ydata <= close_y + close_button_size):
-                plt.close(fig)
+    # Plot nodes
+    xs = [n.x for n in nodes]
+    ys = [n.y for n in nodes]
+    ax.scatter(xs, ys, color='blue', s=20, zorder=2)
 
-    fig.canvas.mpl_connect('button_press_event', on_click)
-    
     return fig, ax
+
+if __name__ == "__main__":
+    create_app()
+    plt.tight_layout()
+    plt.show()
 
 if __name__ == "__main__":
     create_app()
