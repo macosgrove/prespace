@@ -1,40 +1,57 @@
 import matplotlib.pyplot as plt
 import networkx as nx
+from matplotlib.animation import FuncAnimation
 from netgraph import InteractiveGraph
 from loader import load_nodes_from_yaml
+from graph_utils import add_random_node
 
 def create_app():
     # Load nodes into a networkx graph
     G = load_nodes_from_yaml('nodes.yaml')
     
-    # Extract positions from graph attributes
-    node_positions = nx.get_node_attributes(G, 'pos')
-    
     # Set window size
     fig, ax = plt.subplots(figsize=(8, 6))
-    fig.canvas.manager.set_window_title('Prespace - Interactive Nodes')
+    fig.canvas.manager.set_window_title('Prespace - Dynamic Nodes')
     
-    # Create the interactive graph
-    # node_draggable=True allows moving nodes around
-    plot_instance = InteractiveGraph(
-        G, 
-        node_layout=node_positions, 
-        node_labels=True,
-        node_size=50,
-        node_color='blue',
-        edge_width=10,
-        edge_color='pink',
-        edge_alpha=1,
-        node_draggable=True,
-        ax=ax
-    )
-    
-    ax.set_aspect('equal')
-    ax.axis('off')
+    # Store plot_instance in a dictionary or list for mutable access in closure
+    state = {
+        'G': G,
+        'plot': None
+    }
 
-    return fig, ax, plot_instance
+    def update_plot():
+        ax.clear()
+        node_positions = nx.get_node_attributes(state['G'], 'pos')
+        state['plot'] = InteractiveGraph(
+            state['G'], 
+            node_layout=node_positions, 
+            node_labels=True,
+            node_size=50,
+            node_color='blue',
+            edge_width=10,
+            edge_color='pink',
+            edge_alpha=1,
+            node_draggable=True,
+            ax=ax
+        )
+        ax.set_aspect('equal')
+        ax.axis('off')
+
+    # Initial plot
+    update_plot()
+
+    def update(frame):
+        # Add a node every frame (every second)
+        add_random_node(state['G'])
+        update_plot()
+        return []
+
+    # interval=1000ms = 1 second
+    ani = FuncAnimation(fig, update, interval=1000, cache_frame_data=False)
+
+    return fig, ax, state, ani
 
 if __name__ == "__main__":
-    fig, ax, plot = create_app()
+    fig, ax, state, ani = create_app()
     plt.tight_layout()
     plt.show()

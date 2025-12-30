@@ -1,5 +1,6 @@
 import os
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 from main import create_app
 from netgraph import InteractiveGraph
 
@@ -18,15 +19,16 @@ def test_create_app(tmp_path):
         created_dummy = True
     
     try:
-        fig, ax, plot = create_app()
+        fig, ax, state, ani = create_app()
         
         # Verify types
         assert isinstance(fig, plt.Figure)
         assert isinstance(ax, plt.Axes)
-        assert isinstance(plot, InteractiveGraph)
+        assert isinstance(state, dict)
+        assert isinstance(ani, FuncAnimation)
         
-        # Verify basic graph properties from dummy/existing data
-        assert len(plot.node_positions) > 0
+        # Verify basic graph properties
+        assert len(state['G'].nodes) > 0
         
         # Close the figure to avoid memory issues during tests
         plt.close(fig)
