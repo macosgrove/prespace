@@ -1,44 +1,47 @@
 import yaml
-from pyvis.network import Network
+import networkx as nx
 
-def load_nodes_from_yaml(filepath: str) -> Network:
+def load_nodes_from_yaml(filepath: str) -> nx.Graph:
     """
-    Reads a YAML file containing node data and returns a pyvis Network object.
+    Reads a YAML file containing node data and returns a networkx Graph object.
     
     Expected YAML format:
     - id: 1
-      coords: [x, y, z]  # Ignored
+      coords: [x, y, z]  # Used for initial layout
       connections: [id2, id3, ...]
     """
     with open(filepath, 'r') as f:
         data = yaml.safe_load(f)
     
-    net = Network()
+    G = nx.Graph()
     
     if not data:
-        return net
+        return G
     
-    # First pass: Add all nodes
+    # First pass: Add all nodes with positions
+    node_positions = {}
     for entry in data:
-        node_id = str(entry['id'])
-        net.add_node(node_id, label=node_id)
+        node_id = entry['id']
+        coords = entry.get('coords', [0.0, 0.0, 0.0])
+        # Use 2D coordinates for visualization
+        G.add_node(node_id, pos=(coords[0], coords[1]))
     
     # Second pass: Establish connections (edges)
     for entry in data:
-        node_id = str(entry['id'])
+        node_id = entry['id']
         connection_ids = entry.get('connections', [])
         
         for conn_id in connection_ids:
-            net.add_edge(node_id, str(conn_id))
+            G.add_edge(node_id, conn_id)
     
-    return net
+    return G
 
 if __name__ == "__main__":
     # Example usage
     import os
     if os.path.exists('nodes.yaml'):
-        net = load_nodes_from_yaml('nodes.yaml')
-        print(f"Loaded {len(net.nodes)} nodes and {len(net.edges)} edges from nodes.yaml")
-        if net.nodes:
-            sample_node = net.nodes[0]
-            print(f"Sample node: {sample_node}")
+        G = load_nodes_from_yaml('nodes.yaml')
+        print(f"Loaded {G.number_of_nodes()} nodes and {G.number_of_edges()} edges from nodes.yaml")
+        if G.nodes:
+            sample_node = list(G.nodes)[0]
+            print(f"Sample node {sample_node} position: {G.nodes[sample_node]['pos']}")

@@ -1,6 +1,7 @@
 import pytest
 import yaml
 import os
+import networkx as nx
 from loader import load_nodes_from_yaml
 
 def test_load_nodes_from_yaml(tmp_path):
@@ -21,18 +22,18 @@ def test_load_nodes_from_yaml(tmp_path):
     with open(yaml_file, 'w') as f:
         yaml.dump(test_data, f)
     
-    net = load_nodes_from_yaml(str(yaml_file))
+    G = load_nodes_from_yaml(str(yaml_file))
     
-    # Pyvis Network nodes are stored in a list of dicts or objects
-    # and edges are stored in a list of dicts
-    assert len(net.nodes) == 2
-    # Since pyvis Network is undirected by default, it collapses (1,2) and (2,1) into one edge
-    assert len(net.edges) == 1
+    assert isinstance(G, nx.Graph)
+    assert G.number_of_nodes() == 2
+    # NetworkX handles undirected edges automatically; (1,2) and (2,1) become one edge
+    assert G.number_of_edges() == 1
     
-    # Verify IDs are present as strings (we converted them in loader.py)
-    node_ids = {str(n['id']) for n in net.nodes}
-    assert '1' in node_ids
-    assert '2' in node_ids
+    # Verify IDs and positions
+    assert 1 in G.nodes
+    assert 2 in G.nodes
+    assert G.nodes[1]['pos'] == (10.0, 20.0)
+    assert G.nodes[2]['pos'] == (40.0, 50.0)
 
 def test_load_nonexistent_file():
     with pytest.raises(FileNotFoundError):
@@ -42,6 +43,6 @@ def test_load_empty_file(tmp_path):
     yaml_file = tmp_path / "empty.yaml"
     with open(yaml_file, 'w') as f:
         pass
-    net = load_nodes_from_yaml(str(yaml_file))
-    assert len(net.nodes) == 0
-    assert len(net.edges) == 0
+    G = load_nodes_from_yaml(str(yaml_file))
+    assert G.number_of_nodes() == 0
+    assert G.number_of_edges() == 0
