@@ -1,48 +1,44 @@
 import yaml
-from typing import Set, Dict
-from node import Node
+from pyvis.network import Network
 
-def load_nodes_from_yaml(filepath: str) -> Set[Node]:
+def load_nodes_from_yaml(filepath: str) -> Network:
     """
-    Reads a YAML file containing node data and returns a set of Node objects.
+    Reads a YAML file containing node data and returns a pyvis Network object.
     
     Expected YAML format:
     - id: 1
-      coords: [x, y, z]
+      coords: [x, y, z]  # Ignored
       connections: [id2, id3, ...]
     """
     with open(filepath, 'r') as f:
         data = yaml.safe_load(f)
     
+    net = Network()
+    
     if not data:
-        return set()
+        return net
     
-    # First pass: Create all Node objects
-    nodes_by_id: Dict[int, Node] = {}
+    # First pass: Add all nodes
     for entry in data:
-        node_id = entry['id']
-        coords = entry['coords']
-        nodes_by_id[node_id] = Node(node_id, coords[0], coords[1], coords[2])
+        node_id = str(entry['id'])
+        net.add_node(node_id, label=node_id)
     
-    # Second pass: Establish connections
+    # Second pass: Establish connections (edges)
     for entry in data:
-        node_id = entry['id']
-        current_node = nodes_by_id[node_id]
+        node_id = str(entry['id'])
         connection_ids = entry.get('connections', [])
         
         for conn_id in connection_ids:
-            if conn_id in nodes_by_id:
-                # Using the default bidirectional=True from Node class
-                current_node.add_connection(nodes_by_id[conn_id])
+            net.add_edge(node_id, str(conn_id))
     
-    return set(nodes_by_id.values())
+    return net
 
 if __name__ == "__main__":
     # Example usage
     import os
     if os.path.exists('nodes.yaml'):
-        nodes = load_nodes_from_yaml('nodes.yaml')
-        print(f"Loaded {len(nodes)} nodes from nodes.yaml")
-        if nodes:
-            sample_node = next(iter(nodes))
+        net = load_nodes_from_yaml('nodes.yaml')
+        print(f"Loaded {len(net.nodes)} nodes and {len(net.edges)} edges from nodes.yaml")
+        if net.nodes:
+            sample_node = net.nodes[0]
             print(f"Sample node: {sample_node}")

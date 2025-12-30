@@ -1,36 +1,27 @@
-import matplotlib.pyplot as plt
-import matplotlib.collections as mcoll
-from main import create_app
+import os
+from main import create_visualisation
 
-def test_app_structure():
-    fig, ax = create_app()
+def test_visualisation_generation(tmp_path):
+    # Use a temporary file path for the output
+    output_file = tmp_path / "test_nx.html"
+    yaml_file = "nodes.yaml" # Assuming nodes.yaml exists as it's the default
     
-    # Check if limits are set correctly (with padding)
-    assert ax.get_xlim() == (-5.0, 105.0)
-    assert ax.get_ylim() == (-5.0, 105.0)
+    # If nodes.yaml doesn't exist, we might need to skip or mock it
+    if not os.path.exists(yaml_file):
+        # Create a dummy nodes.yaml if it doesn't exist for the test
+        import yaml
+        dummy_data = [{'id': 1, 'coords': [0, 0, 0], 'connections': []}]
+        yaml_file = tmp_path / "dummy_nodes.yaml"
+        with open(yaml_file, 'w') as f:
+            yaml.dump(dummy_data, f)
     
-    # Verify nodes (scatter plot uses PathCollection)
-    collections = [c for c in ax.collections if isinstance(c, mcoll.PathCollection)]
-    assert len(collections) >= 1
-    # Check number of points (should be 100)
-    assert len(collections[0].get_offsets()) == 100
+    create_visualisation(yaml_path=str(yaml_file), output_path=str(output_file))
     
-    # Verify connections (lines)
-    lines = ax.get_lines()
-    assert len(lines) > 0 # Should have many connection lines
-    for line in lines:
-        assert line.get_color() == 'gray'
-        assert line.get_alpha() == 0.5
-    
-    # Verify "Hello World" is NOT present
-    assert len(ax.texts) == 0
-    
-    plt.close(fig)
+    # Check if the output file was created
+    assert os.path.exists(str(output_file))
+    # Check if it has some content
+    assert os.path.getsize(str(output_file)) > 0
 
 if __name__ == "__main__":
-    test_app_structure()
-    print("Test passed!")
-
-if __name__ == "__main__":
-    test_app_structure()
-    print("Test passed!")
+    import pytest
+    pytest.main([__file__])

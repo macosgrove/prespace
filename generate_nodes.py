@@ -1,7 +1,7 @@
 import yaml
 import random
 
-def generate_random_nodes(count=100):
+def generate_random_nodes(count):
     nodes = []
     for i in range(1, count + 1):
         x = round(random.uniform(0, 100), 2)
@@ -24,9 +24,10 @@ def generate_random_nodes(count=100):
     return nodes
 
 if __name__ == "__main__":
-    node_data = generate_random_nodes(100)
+    num_nodes = 20
+    node_data = generate_random_nodes(num_nodes)
     
     with open('nodes.yaml', 'w') as f:
         yaml.dump(node_data, f, default_flow_style=False, sort_keys=False)
     
-    print(f"Successfully generated 100 nodes in nodes.yaml")
+    print(f"Successfully generated {num_nodes} nodes in nodes.yaml")
