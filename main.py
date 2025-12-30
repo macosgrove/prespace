@@ -22,14 +22,18 @@ def create_app():
     def update_plot():
         ax.clear()
         node_positions = nx.get_node_attributes(state['G'], 'pos')
+        node_colors = nx.get_node_attributes(state['G'], 'color')
+        
         state['plot'] = InteractiveGraph(
             state['G'], 
-            node_layout=node_positions, 
+            edge_layout='curved',
+            node_layout='spring',
             node_labels=True,
-            node_size=50,
-            node_color='blue',
-            edge_width=10,
-            edge_color='pink',
+            node_size=2,
+            node_color=node_colors,
+            node_edge_width=0,
+            edge_width=0.4,
+            edge_color='gray',
             edge_alpha=1,
             node_draggable=True,
             ax=ax
