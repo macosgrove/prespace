@@ -1,0 +1,19 @@
+{
+  "name": "prespace",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vite": "^7.2.4",
+    "vitest": "^4.0.16"
+  },
+  "dependencies": {
+    "3d-force-graph": "^1.79.0"
+  }
+}

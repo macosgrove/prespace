@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Force Graph | PreSpace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div id="3d-graph"></div>
+
+  <!-- UI Overlay -->
+  <div class="ui-overlay">
+    <header>
+      <h1>PreSpace <span>3D</span></h1>
+      <p>Interactive Force-Directed Graph</p>
+    </header>
+
+    <div class="controls-panel">
+      <div class="stat-item">
+        <span class="label">Nodes:</span>
+        <span id="node-count" class="value">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="label">Links:</span>
+        <span id="link-count" class="value">0</span>
+      </div>
+      <div class="control-group">
+        <button id="reset-btn" class="btn btn-secondary">Reset View</button>
+        <button id="toggle-dynamic" class="btn btn-primary">Pause Growth</button>
+      </div>
+    </div>
+
+    <div class="hint">
+      <p>Click a node to remove it • Drag to rotate • Scroll to zoom</p>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
