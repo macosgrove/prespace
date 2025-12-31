@@ -1,8 +1,6 @@
 import yaml
 import random
-
-def _get_random_color():
-    return "#" + "".join([random.choice('0123456789ABCDEF') for _ in range(6)])
+from graph_utils import get_random_color
 
 def generate_random_nodes(count):
     nodes = []
@@ -21,7 +19,7 @@ def generate_random_nodes(count):
         nodes.append({
             'id': i,
             'coords': [x, y, z],
-            'color': _get_random_color(),
+            'color': get_random_color(),
             'connections': sorted(connections)
         })
     

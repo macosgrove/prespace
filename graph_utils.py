@@ -1,7 +1,7 @@
 import networkx as nx
 import random
 
-def _get_random_color():
+def get_random_color():
     return "#" + "".join([random.choice('0123456789ABCDEF') for _ in range(6)])
 
 def add_random_node(G: nx.Graph) -> nx.Graph:
@@ -17,7 +17,7 @@ def add_random_node(G: nx.Graph) -> nx.Graph:
     
     # Random position (0-100 to match original generation)
     pos = (round(random.uniform(0, 100), 2), round(random.uniform(0, 100), 2))
-    G.add_node(new_id, pos=pos, color=_get_random_color())
+    G.add_node(new_id, pos=pos, color=get_random_color())
     
     # Get existing nodes to connect to
     existing_nodes = list(G.nodes)
