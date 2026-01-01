@@ -65,4 +65,9 @@ export class GraphManager {
             this.addNode();
         }
     }
+
+    clearGraph() {
+        this.data.nodes = [];
+        this.data.links = [];
+    }
 }
