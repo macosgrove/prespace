@@ -17,7 +17,8 @@ export interface GraphData {
 export class GraphManager {
     private nextNodeId: number = 0;
     private nextLinkId: number = 0;
-    private data: GraphData = { nodes: [], links: [] };
+    private nodes: Map<number, Node> = new Map();
+    private links: Map<number, Link> = new Map();
 
     constructor(initialLinks: number = 1) {
         this.addLinks({ linkCount: initialLinks, addNodeProbability: 1 });
@@ -41,7 +42,7 @@ export class GraphManager {
             target: target2.id
         };
 
-        this.data.links.push(newLink);
+        this.links.set(newLink.id, newLink);
 
         // Update nodes with the new link ID
         target1.linkIds.push(newLink.id);
@@ -55,42 +56,47 @@ export class GraphManager {
             id: this.nextNodeId++,
             linkIds: []
         };
-        this.data.nodes.push(newNode);
+        this.nodes.set(newNode.id, newNode);
         return newNode;
     }
 
     removeNode(nodeId: number) {
-        // Identify links to be removed
-        const linksToRemove = this.data.links.filter(l => {
-            const sId = typeof l.source === 'object' ? l.source.id : l.source;
-            const tId = typeof l.target === 'object' ? l.target.id : l.target;
-            return sId === nodeId || tId === nodeId;
-        });
-        const linkIdsToRemove = new Set(linksToRemove.map(l => l.id));
+        const node = this.nodes.get(nodeId);
+        if (!node) return;
 
-        // Filter nodes
-        this.data.nodes = this.data.nodes.filter(n => n.id !== nodeId);
+        // Iterate over the linkIds attached to this node
+        for (const linkId of node.linkIds) {
+            const link = this.links.get(linkId);
+            if (!link) continue;
 
-        // Remove link IDs from remaining nodes
-        this.data.nodes.forEach(n => {
-            if (n.linkIds.length > 0) {
-                n.linkIds = n.linkIds.filter(id => !linkIdsToRemove.has(id));
+            // Find the other node connected by this link
+            const sId = typeof link.source === 'object' ? link.source.id : link.source;
+            const tId = typeof link.target === 'object' ? link.target.id : link.target;
+            const otherNodeId = sId === nodeId ? tId : sId;
+
+            const otherNode = this.nodes.get(otherNodeId);
+            if (otherNode) {
+                // Remove the link reference from the other node
+                otherNode.linkIds = otherNode.linkIds.filter(id => id !== linkId);
             }
-        });
 
-        // Filter links
-        this.data.links = this.data.links.filter(l => !linkIdsToRemove.has(l.id));
+            // Remove the link itself
+            this.links.delete(linkId);
+        }
+
+        // Finally remove the node
+        this.nodes.delete(nodeId);
     }
 
     getGraphData(): GraphData {
         return {
-            nodes: [...this.data.nodes],
-            links: [...this.data.links]
+            nodes: Array.from(this.nodes.values()),
+            links: Array.from(this.links.values())
         };
     }
 
     private getRandomNode(): Node | null {
-        const candidates = this.data.nodes;
+        const candidates = Array.from(this.nodes.values());
         if (candidates.length === 0) return null;
         return candidates[Math.floor(Math.random() * candidates.length)];
     }
@@ -100,13 +106,13 @@ export class GraphManager {
     }
 
     resetIfEmpty() {
-        if (this.data.nodes.length === 0) {
+        if (this.nodes.size === 0) {
             this.addLinks();
         }
     }
 
     clearGraph() {
-        this.data.nodes = [];
-        this.data.links = [];
+        this.nodes.clear();
+        this.links.clear();
     }
 }
