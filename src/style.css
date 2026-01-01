@@ -118,6 +118,7 @@ header p {
 .stat-item .value {
   font-weight: 600;
   color: var(--accent-color);
+  margin-left: 0.5rem;
 }
 
 .control-section {
@@ -161,6 +162,30 @@ input[type="range"]::-webkit-slider-thumb {
   background: var(--accent-color);
   border-radius: 50%;
   box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+input[type="number"] {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  color: var(--text-color);
+  padding: 4px 8px;
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+  width: 60px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="number"]:focus {
+  border-color: var(--accent-color);
 }
 
 .control-group-row {

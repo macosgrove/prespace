@@ -16,22 +16,28 @@ export class GraphManager {
     private nextNodeId: number = 0;
     private data: GraphData = { nodes: [], links: [] };
 
-    constructor(initialNodes: number = 1) {
-        for (let i = 0; i < initialNodes; i++) {
-            this.addNode();
-        }
+    constructor(initialLinks: number = 1) {
+        this.addLinks({ linkCount: initialLinks, addNodeProbability: 1 });
     }
 
-    addNode(targetId?: number): Node {
+    addLinks({ linkCount = 1, addNodeProbability = 1 }: { linkCount?: number, addNodeProbability?: number } = {}): Node | undefined {
+        let lastNode: Node | undefined;
+        for (let i = 0; i < linkCount; i++) {
+            lastNode = this.addLink(addNodeProbability);
+        }
+        return lastNode;
+    }
+
+    addLink(addNodeProbability: number = 0.5): Node {
+        const target1 = this.getRandomNode() || this.newNode();
+        const target2 = this.shouldDo(addNodeProbability) ? this.newNode() : this.getRandomNode() || this.newNode();
+        this.data.links.push({ source: target1.id, target: target2.id });
+        return target2;
+    }
+
+    newNode(): Node {
         const newNode: Node = { id: this.nextNodeId++ };
         this.data.nodes.push(newNode);
-
-        if (targetId !== undefined || this.data.nodes.length > 1) {
-            const actualTarget = targetId !== undefined ? targetId : this.getRandomNodeId(newNode.id);
-            if (actualTarget !== null) {
-                this.data.links.push({ source: newNode.id, target: actualTarget });
-            }
-        }
         return newNode;
     }
 
@@ -54,15 +60,19 @@ export class GraphManager {
         };
     }
 
-    private getRandomNodeId(excludeId: number): number | null {
-        const candidates = this.data.nodes.filter(n => n.id !== excludeId);
+    private getRandomNode(): Node | null {
+        const candidates = this.data.nodes;
         if (candidates.length === 0) return null;
-        return candidates[Math.floor(Math.random() * candidates.length)].id;
+        return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    private shouldDo(probability: number): boolean {
+        return Math.random() < probability;
     }
 
     resetIfEmpty() {
         if (this.data.nodes.length === 0) {
-            this.addNode();
+            this.addLinks();
         }
     }
 

@@ -2,29 +2,42 @@ import { describe, it, expect } from 'vitest';
 import { GraphManager } from './graphManager';
 
 describe('GraphManager', () => {
-    it('should initialize with the requested number of nodes', () => {
+    it('should initialize with the requested number of links', () => {
         const manager = new GraphManager(1);
         const data = manager.getGraphData();
-        expect(data.nodes.length).toBe(1);
-        expect(data.links.length).toBe(0);
+        expect(data.nodes.length).toBe(2);
+        expect(data.links.length).toBe(1);
     });
 
-    it('should add a node and connect it to an existing one', () => {
+    it('should add a link and connecting an existing node to a new node', () => {
         const manager = new GraphManager(1);
         const initialId = manager.getGraphData().nodes[0].id;
 
-        manager.addNode();
+        manager.addLinks({ linkCount: 1, addNodeProbability: 1 });
         const data = manager.getGraphData();
 
-        expect(data.nodes.length).toBe(2);
-        expect(data.links.length).toBe(1);
-        expect(data.links[0].target).toBe(initialId);
+        expect(data.nodes.length).toBe(3);
+        expect(data.links.length).toBe(2);
+        const newNode = data.nodes[2];
+        const newLink = data.links[1];
+        expect(newLink.target).toBe(newNode.id);
+    });
+
+    it('should add a link connecting two existing nodes', () => {
+        const manager = new GraphManager(100);
+        const data = manager.getGraphData();
+        expect(data.nodes.length).toBe(101);
+        expect(data.links.length).toBe(100);
+
+        manager.addLinks({ linkCount: 1, addNodeProbability: 0 });
+        const newData = manager.getGraphData();
+        expect(newData.nodes.length).toBe(101);
+        expect(newData.links.length).toBe(101);
     });
 
     it('should correctly remove a node and its associated links', () => {
         const manager = new GraphManager(1);
         const initialNode = manager.getGraphData().nodes[0];
-        const newNode = manager.addNode();
 
         expect(manager.getGraphData().nodes.length).toBe(2);
         expect(manager.getGraphData().links.length).toBe(1);
@@ -33,14 +46,13 @@ describe('GraphManager', () => {
         const data = manager.getGraphData();
 
         expect(data.nodes.length).toBe(1);
-        expect(data.nodes[0].id).toBe(newNode.id);
-        expect(data.links.length).toBe(0); // Link should be gone
+        expect(data.links.length).toBe(0);
     });
 
     it('should handle object-based links during removal', () => {
         const manager = new GraphManager(1);
         const initialNode = manager.getGraphData().nodes[0];
-        manager.addNode();
+        manager.addLinks();
 
         // Simulate 3d-force-graph behavior where it replaces IDs with objects
         const dataWithObjects = manager.getGraphData();
@@ -52,16 +64,21 @@ describe('GraphManager', () => {
         // This is a bit tricky to test without a setter, but the removal logic handles it.
     });
 
-    it('should restart with a new node if resetIfEmpty is called on an empty graph', () => {
+    it('should restart with a new link joining two nodes if resetIfEmpty is called on an empty graph', () => {
         const manager = new GraphManager(1);
-        const initialId = manager.getGraphData().nodes[0].id;
+        const data = manager.getGraphData()
+        const initialSourceId = manager.getGraphData().nodes[0].id;
+        const initialTargetId = manager.getGraphData().nodes[1].id;
 
-        manager.removeNode(initialId);
+        manager.removeNode(initialSourceId);
+        manager.removeNode(initialTargetId);
         expect(manager.getGraphData().nodes.length).toBe(0);
+        expect(manager.getGraphData().links.length).toBe(0);
 
         manager.resetIfEmpty();
-        const data = manager.getGraphData();
-        expect(data.nodes.length).toBe(1);
-        expect(data.nodes[0].id).not.toBe(initialId); // Should have a new persistent ID
+        const newData = manager.getGraphData();
+        expect(newData.nodes.length).toBe(2);
+        expect(newData.nodes[0].id).not.toBe(initialSourceId); // Should have a new persistent ID
+        expect(newData.links.length).toBe(1);
     });
 });

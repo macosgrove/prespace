@@ -33,13 +33,15 @@
       </div>
 
       <div class="panel-content">
-        <div class="stat-item">
-          <span class="label">Nodes:</span>
-          <span id="node-count" class="value">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="label">Links:</span>
-          <span id="link-count" class="value">0</span>
+        <div class="control-group-row">
+          <div class="stat-item">
+            <span class="label">Nodes:</span>
+            <span id="node-count" class="value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="label">Links:</span>
+            <span id="link-count" class="value">0</span>
+          </div>
         </div>
 
         <div class="control-section">
@@ -48,6 +50,13 @@
             <span class="slider-label">Slow</span>
             <input type="range" id="speed-slider" min="10" max="2000" step="10" value="1000">
             <span class="slider-label">Fast</span>
+          </div>
+        </div>
+
+        <div class="control-section">
+          <div class="label">Edges per Tick</div>
+          <div class="input-container">
+            <input type="number" id="edges-per-tick" min="1" max="50" step="1" value="1">
           </div>
         </div>
 
@@ -88,11 +97,10 @@
             </svg>
           </button>
         </div>
+        <div class="hint">
+          <p>Click a node to remove it • Drag to rotate • Scroll to zoom</p>
+        </div>
       </div>
-    </div>
-
-    <div class="hint">
-      <p>Click a node to remove it • Drag to rotate • Scroll to zoom</p>
     </div>
   </div>
 

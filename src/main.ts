@@ -11,6 +11,7 @@ const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
 const stepBtn = document.getElementById("step-btn") as HTMLButtonElement;
 const clearBtn = document.getElementById("clear-btn") as HTMLButtonElement;
 const speedSlider = document.getElementById("speed-slider") as HTMLInputElement;
+const edgesPerTickInput = document.getElementById("edges-per-tick") as HTMLInputElement;
 const minimizeBtn = document.getElementById("minimize-btn") as HTMLButtonElement;
 const controlsPanel = document.getElementById("controls-panel")!;
 const pauseIcon = document.getElementById("pause-icon")!;
@@ -18,6 +19,7 @@ const playIcon = document.getElementById("play-icon")!;
 
 let isPaused = false;
 let tickSpeed = parseInt(speedSlider.value);
+let edgesPerTick = parseInt(edgesPerTickInput.value);
 let growthTimeout: number | null = null;
 const manager = new GraphManager(1);
 
@@ -30,7 +32,7 @@ const Graph = new ForceGraph3D(elem)
     .linkWidth(2)
     .linkDirectionalParticles(2)
     .linkDirectionalParticleSpeed(0.005)
-    .enableNodeDrag(false)
+    .enableNodeDrag(true)
     .onNodeClick(removeNode)
     .graphData(manager.getGraphData());
 
@@ -47,7 +49,7 @@ function tick() {
 
 function performStep() {
     manager.resetIfEmpty();
-    manager.addNode();
+    manager.addLinks({ linkCount: edgesPerTick, addNodeProbability: 0.5 });
     Graph.graphData(manager.getGraphData());
     updateStats();
 }
