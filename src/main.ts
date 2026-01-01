@@ -50,6 +50,7 @@ function tick() {
 function performStep() {
     manager.resetIfEmpty();
     manager.addLinks({ linkCount: linksPerTick, addNodeProbability: 0.5 });
+    manager.removeLinks();
     Graph.graphData(manager.getGraphData());
     updateStats();
 }

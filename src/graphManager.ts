@@ -64,28 +64,68 @@ export class GraphManager {
         const node = this.nodes.get(nodeId);
         if (!node) return;
 
-        // Iterate over the linkIds attached to this node
-        for (const linkId of node.linkIds) {
-            const link = this.links.get(linkId);
-            if (!link) continue;
-
-            // Find the other node connected by this link
-            const sId = typeof link.source === 'object' ? link.source.id : link.source;
-            const tId = typeof link.target === 'object' ? link.target.id : link.target;
-            const otherNodeId = sId === nodeId ? tId : sId;
-
-            const otherNode = this.nodes.get(otherNodeId);
-            if (otherNode) {
-                // Remove the link reference from the other node
-                otherNode.linkIds = otherNode.linkIds.filter(id => id !== linkId);
-            }
-
-            // Remove the link itself
-            this.links.delete(linkId);
+        // Iterate over a copy of linkIds attached to this node
+        const linkIdsToRemove = [...node.linkIds];
+        for (const linkId of linkIdsToRemove) {
+            this.removeLink(linkId);
         }
 
         // Finally remove the node
         this.nodes.delete(nodeId);
+    }
+
+    removeLinks() {
+        for (const link of this.links.values()) {
+            if (this.shouldDo(this.removeLinkProbability(link))) {
+                this.removeLink(link.id);
+            }
+        }
+    }
+
+    removeLinkProbability(link: Link): number {
+        const sourceNode = this.nodes.get(this.getNodeId(link.source));
+        const targetNode = this.nodes.get(this.getNodeId(link.target));
+
+        const sourceWeight = sourceNode?.linkIds?.length || 0;
+        const targetWeight = targetNode?.linkIds?.length || 0;
+        const nodeWeight: number = sourceWeight + targetWeight;
+
+        const probabilityMap: Map<number, number> = new Map([
+            [2, 0.2],
+            [3, 0.15],
+            [4, 0.1],
+            [5, 0.05],
+            [6, 0.02]
+        ]);
+        return probabilityMap.get(Math.min(nodeWeight, 6)) || 0;
+    }
+
+    private getNodeId(sourceOrTarget: any): number {
+        return typeof sourceOrTarget === 'object' ? sourceOrTarget.id : sourceOrTarget;
+    }
+
+
+    removeLink(linkId: number) {
+        const link = this.links.get(linkId);
+        if (!link) return;
+
+        // Find the connected nodes
+        const sId = this.getNodeId(link.source);
+        const tId = this.getNodeId(link.target);
+
+        // Remove the link reference from both nodes
+        const sourceNode = this.nodes.get(sId);
+        if (sourceNode) {
+            sourceNode.linkIds = sourceNode.linkIds.filter(id => id !== linkId);
+        }
+
+        const targetNode = this.nodes.get(tId);
+        if (targetNode) {
+            targetNode.linkIds = targetNode.linkIds.filter(id => id !== linkId);
+        }
+
+        // Remove the link itself
+        this.links.delete(linkId);
     }
 
     getGraphData(): GraphData {
