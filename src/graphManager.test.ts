@@ -64,6 +64,20 @@ describe('GraphManager', () => {
         // This is a bit tricky to test without a setter, but the removal logic handles it.
     });
 
+    it('should track linkIds on nodes', () => {
+        const manager = new GraphManager(1);
+        const data = manager.getGraphData();
+        const link = data.links[0];
+
+        expect(data.nodes[0].linkIds).toContain(link.id);
+        expect(data.nodes[1].linkIds).toContain(link.id);
+
+        manager.removeNode(data.nodes[0].id);
+        const newData = manager.getGraphData();
+        const remainingNode = newData.nodes.find(n => n.id === data.nodes[1].id);
+        expect(remainingNode?.linkIds).not.toContain(link.id);
+    });
+
     it('should restart with a new link joining two nodes if resetIfEmpty is called on an empty graph', () => {
         const manager = new GraphManager(1);
         const data = manager.getGraphData()
