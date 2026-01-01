@@ -150,5 +150,30 @@ describe('GraphManager', () => {
             // Since links are a Map and we iterate over values, order might vary but 5 should be removed
             expect(manager.getGraphData().links.length).toBe(5);
         });
+
+        it('should remove nodes that become orphaned after link removal', () => {
+            const manager = new GraphManager(1);
+            const data = manager.getGraphData();
+            const linkId = data.links[0].id;
+
+            expect(data.nodes.length).toBe(2);
+
+            manager.removeLink(linkId);
+
+            const newData = manager.getGraphData();
+            expect(newData.links.length).toBe(0);
+            expect(newData.nodes.length).toBe(0); // Both nodes should be removed as they were only connected by this link
+        });
+
+        it('should cleanup all nodes when all links are removed via removeLinks', () => {
+            const manager = new GraphManager(10);
+            vi.spyOn(manager, 'removeLinkProbability' as any).mockReturnValue(1);
+
+            manager.removeLinks();
+
+            const data = manager.getGraphData();
+            expect(data.links.length).toBe(0);
+            expect(data.nodes.length).toBe(0);
+        });
     });
 });

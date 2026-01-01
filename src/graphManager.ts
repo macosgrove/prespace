@@ -117,11 +117,17 @@ export class GraphManager {
         const sourceNode = this.nodes.get(sId);
         if (sourceNode) {
             sourceNode.linkIds = sourceNode.linkIds.filter(id => id !== linkId);
+            if (sourceNode.linkIds.length === 0) {
+                this.nodes.delete(sId);
+            }
         }
 
         const targetNode = this.nodes.get(tId);
         if (targetNode) {
             targetNode.linkIds = targetNode.linkIds.filter(id => id !== linkId);
+            if (targetNode.linkIds.length === 0) {
+                this.nodes.delete(tId);
+            }
         }
 
         // Remove the link itself
