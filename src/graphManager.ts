@@ -2,7 +2,7 @@ export interface Node {
     id: number;
     links: Link[];
     color: string;
-    bornGeneration: number;
+    birthGeneration: number;
 }
 
 export interface Link {
@@ -50,7 +50,7 @@ export class GraphManager {
 
     addLink(addNodeProbability: number = 0.5) {
         // Select potential targets: either existing or placeholder for new
-        let t1: Node | null = this.getRandomNode();
+        let t1: Node | null = this.shouldDo(addNodeProbability) ? null : this.getRandomNode();
         let t2: Node | null = this.shouldDo(addNodeProbability) ? null : this.getRandomNode();
 
         // Check maxLinks constraint for existing targets
@@ -83,7 +83,7 @@ export class GraphManager {
         const newNode: Node = {
             id: this.nextNodeId++,
             links: [],
-            bornGeneration: this.generation,
+            birthGeneration: this.generation,
             color: ''
         };
         this.updateNodeColor(newNode);
@@ -92,7 +92,7 @@ export class GraphManager {
     }
 
     private updateNodeColor(node: Node) {
-        const hue = node.bornGeneration % 360;
+        const hue = node.birthGeneration % 360;
         const saturation = 100;
         // Lightness: 10% (1 link) to 100% (maxLinks links)
         const linkCount = node.links.length;

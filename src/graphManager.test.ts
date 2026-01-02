@@ -9,45 +9,6 @@ describe('GraphManager', () => {
         expect(data.links.length).toBe(1);
     });
 
-    it('should add a link and connecting an existing node to a new node', () => {
-        const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
-
-        manager.addLinks({ linkCount: 1, addNodeProbability: 1 });
-        const data = manager.getGraphData();
-
-        expect(data.nodes.length).toBe(3);
-        expect(data.links.length).toBe(2);
-        const newNode = data.nodes[2];
-        const newLink = data.links[1];
-        expect(newLink.target.id).toBe(newNode.id);
-    });
-
-    it('should add a link connecting two existing nodes', () => {
-        const manager = new GraphManager({ initialLinks: 100, maxLinks: 100 });
-        const data = manager.getGraphData();
-        expect(data.nodes.length).toBe(101);
-        expect(data.links.length).toBe(100);
-
-        manager.addLinks({ linkCount: 1, addNodeProbability: 0 });
-        const newData = manager.getGraphData();
-        expect(newData.nodes.length).toBe(101);
-        expect(newData.links.length).toBe(101);
-    });
-
-    it('should correctly remove a node and its associated links', () => {
-        const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
-        const initialNode = manager.getGraphData().nodes[0];
-
-        expect(manager.getGraphData().nodes.length).toBe(2);
-        expect(manager.getGraphData().links.length).toBe(1);
-
-        manager.removeNode(initialNode.id);
-        const data = manager.getGraphData();
-
-        expect(data.nodes.length).toBe(0); // Rest of the graph was orphaned
-        expect(data.links.length).toBe(0);
-    });
-
     it('should have object-based links', () => {
         const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
         const data = manager.getGraphData();
@@ -62,49 +23,77 @@ describe('GraphManager', () => {
 
         expect(data.nodes[0].links.map(l => l.id)).toContain(link.id);
         expect(data.nodes[1].links.map(l => l.id)).toContain(link.id);
-
-        manager.removeNode(data.nodes[0].id);
-        const newData = manager.getGraphData();
-        // The other node should be gone too!
-        expect(newData.nodes.length).toBe(0);
     });
 
-    it('should remove a specific link and cleanup nodes', () => {
-        const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
-        const data = manager.getGraphData();
-        const linkId = data.links[0].id;
+    describe('Adding links', () => {
+        it('should add a link connecting two new nodes', () => {
+            const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
 
-        manager.removeLink(linkId);
-        const newData = manager.getGraphData();
+            manager.addLinks({ linkCount: 1, addNodeProbability: 1 });
+            const data = manager.getGraphData();
 
-        expect(newData.links.length).toBe(0);
-        expect(newData.nodes.length).toBe(0);
+            expect(data.nodes.length).toBe(4);
+            expect(data.links.length).toBe(2);
+            const newNode = data.nodes[3];
+            const newLink = data.links[1];
+            expect(newLink.target.id).toBe(newNode.id);
+        });
+
+        it('should add a link connecting two existing nodes', () => {
+            const manager = new GraphManager({ initialLinks: 100, maxLinks: 100 });
+            const data = manager.getGraphData();
+            expect(data.nodes.length).toBe(200);
+            expect(data.links.length).toBe(100);
+
+            manager.addLinks({ linkCount: 1, addNodeProbability: 0 });
+            const newData = manager.getGraphData();
+            expect(newData.nodes.length).toBe(200);
+            expect(newData.links.length).toBe(101);
+        });
     });
 
-    it('should restart with a new link joining two nodes if reset is called', () => {
-        const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
-        manager.reset();
-        const newData = manager.getGraphData();
-        expect(newData.nodes.length).toBe(2);
-        expect(newData.links.length).toBe(1);
-    });
+    describe('Removing links', () => {
+        it('should correctly remove a node and its associated links', () => {
+            const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
+            const initialNode = manager.getGraphData().nodes[0];
 
-    it('should respect maxLinks constraint and not create orphaned nodes', () => {
-        const manager = new GraphManager({ initialLinks: 1, maxLinks: 1 });
-        const initialData = manager.getGraphData();
-        expect(initialData.nodes.length).toBe(2);
-        expect(initialData.links.length).toBe(1);
+            expect(manager.getGraphData().nodes.length).toBe(2);
+            expect(manager.getGraphData().links.length).toBe(1);
 
-        // All nodes are currently at maxLinks (1). 
-        // Attempting to add a link should return early and NOT create new nodes.
-        manager.addLinks({ linkCount: 1, addNodeProbability: 1 });
+            manager.removeNode(initialNode.id);
+            const data = manager.getGraphData();
 
-        const finalData = manager.getGraphData();
-        expect(finalData.nodes.length).toBe(2);
-        expect(finalData.links.length).toBe(1);
-    });
+            expect(data.nodes.length).toBe(0); // Rest of the graph was orphaned
+            expect(data.links.length).toBe(0);
+        });
 
-    describe('removeLinks', () => {
+        it('should remove a specific link and cleanup nodes', () => {
+            const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
+            const data = manager.getGraphData();
+            const linkId = data.links[0].id;
+
+            manager.removeLink(linkId);
+            const newData = manager.getGraphData();
+
+            expect(newData.links.length).toBe(0);
+            expect(newData.nodes.length).toBe(0);
+        });
+
+        it('should respect maxLinks constraint and not create orphaned nodes', () => {
+            const manager = new GraphManager({ initialLinks: 1, maxLinks: 1 });
+            const initialData = manager.getGraphData();
+            expect(initialData.nodes.length).toBe(2);
+            expect(initialData.links.length).toBe(1);
+
+            // Both nodes are at maxLinks (1). 
+            // Attempting to add a link to existing nodes should fail.
+            manager.addLinks({ linkCount: 1, addNodeProbability: 0 });
+
+            const finalData = manager.getGraphData();
+            expect(finalData.nodes.length).toBe(2);
+            expect(finalData.links.length).toBe(1);
+        });
+
         it('should remove all links when probability is 1', () => {
             const manager = new GraphManager({ initialLinks: 10, maxLinks: 100 });
             expect(manager.getGraphData().links.length).toBe(10);
@@ -137,6 +126,16 @@ describe('GraphManager', () => {
             const newData = manager.getGraphData();
             expect(newData.links.length).toBe(0);
             expect(newData.nodes.length).toBe(0);
+        });
+    });
+
+    describe('Resetting the graph', () => {
+        it('should restart with a new link joining two nodes', () => {
+            const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
+            manager.reset();
+            const newData = manager.getGraphData();
+            expect(newData.nodes.length).toBe(2);
+            expect(newData.links.length).toBe(1);
         });
     });
 
@@ -211,35 +210,36 @@ describe('GraphManager', () => {
             manager.reset();
             expect(manager.getGeneration()).toBe(0);
         });
-        describe('Node Coloring', () => {
-            it('should assign color based on birth generation and connectivity', () => {
-                const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
-                const data = manager.getGraphData();
-                const node = data.nodes[0];
+    });
 
-                // Gen 0, 1 link -> hue 0, lightness 10 + (1/10 * 90) = 19%
-                expect(node.bornGeneration).toBe(0);
-                expect(node.color).toBe('hsl(0, 100%, 19%)');
+    describe('Node Coloring', () => {
+        it('should assign color based on birth generation and connectivity', () => {
+            const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
+            const data = manager.getGraphData();
+            const node = data.nodes[0];
 
-                // Add more links to the same node
-                // Connect to a new node
-                manager.addLinks({ linkCount: 1, addNodeProbability: 1 });
-                // The node still has bornGeneration 0, but now 2 links
-                // Lightness 10 + (2/10 * 90) = 28%
-                expect(node.color).toBe('hsl(0, 100%, 28%)');
-            });
+            // Gen 0, 1 link -> hue 0, lightness 10 + (1/10 * 90) = 19%
+            expect(node.birthGeneration).toBe(0);
+            expect(node.color).toBe('hsl(0, 100%, 19%)');
 
-            it('should change hue based on current generation when node is born', () => {
-                const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
-                manager.updateGeneration(); // Gen 1
-                manager.updateGeneration(); // Gen 2
+            // Add more links to the same node
+            // Connect to an existing node by setting addNodeProbability to 0
+            manager.addLinks({ linkCount: 1, addNodeProbability: 0 });
+            // The node still has birthGeneration 0, but now 2 links
+            // Lightness 10 + (2/10 * 90) = 28%
+            expect(node.color).toBe('hsl(0, 100%, 28%)');
+        });
 
-                const newNode = manager.newNode();
-                expect(newNode.bornGeneration).toBe(2);
-                // 0 links (initially), but updateNodeColor is called in newNode
-                // hue 2, lightness 10%
-                expect(newNode.color).toBe('hsl(2, 100%, 10%)');
-            });
+        it('should change hue based on current generation when node is born', () => {
+            const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
+            manager.updateGeneration(); // Gen 1
+            manager.updateGeneration(); // Gen 2
+
+            const newNode = manager.newNode();
+            expect(newNode.birthGeneration).toBe(2);
+            // 0 links (initially), but updateNodeColor is called in newNode
+            // hue 2, lightness 10%
+            expect(newNode.color).toBe('hsl(2, 100%, 10%)');
         });
     });
 });
