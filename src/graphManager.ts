@@ -19,6 +19,7 @@ export class GraphManager {
     private nextLinkId: number = 0;
     private nodes: Map<number, Node> = new Map();
     private links: Map<number, Link> = new Map();
+    private removalProbabilities: Map<number, number> = new Map();
 
     constructor(initialLinks: number = 1) {
         this.addLinks({ linkCount: initialLinks, addNodeProbability: 1, maxLinks: initialLinks });
@@ -88,14 +89,22 @@ export class GraphManager {
         const targetWeight = link.target.links.length;
         const nodeWeight: number = sourceWeight + targetWeight;
 
-        const probabilityMap: Map<number, number> = new Map([
-            [2, 0.2],
-            [3, 0.15],
-            [4, 0.1],
-            [5, 0.05],
-            [6, 0.02]
-        ]);
-        return probabilityMap.get(Math.min(nodeWeight, 6)) || 0;
+        // Clamp weight between 2 and 6 for probability lookup
+        const lookupKey = Math.max(2, Math.min(nodeWeight, 6));
+        return this.removalProbabilities.get(lookupKey) || 0;
+    }
+
+    updateRemovalProbabilities(map: Map<number, number>) {
+        // Map keys are 2, 3, 4, 5, 6 corresponding to density levels
+        for (const [key, value] of map.entries()) {
+            let probability = 0;
+            if (value > 0) {
+                // Logarithmic scale: value 10 -> 1, value 1 -> 1e-5
+                // Formula: 10^((5/9) * (value - 10))
+                probability = Math.pow(10, (5 * (value - 10)) / 9);
+            }
+            this.removalProbabilities.set(key, probability);
+        }
     }
 
     removeLink(linkId: number) {

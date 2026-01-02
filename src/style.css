@@ -146,6 +146,12 @@ header p {
   min-width: 30px;
 }
 
+.prob-slider-label {
+  font-size: 0.7rem;
+  opacity: 0.4;
+  width: 60px;
+}
+
 input[type="range"] {
   flex-grow: 1;
   background: rgba(255, 255, 255, 0.1);

@@ -14,6 +14,13 @@ const speedSlider = document.getElementById("speed-slider") as HTMLInputElement;
 const linksPerTickInput = document.getElementById("links-per-tick") as HTMLInputElement;
 const maxLinksInput = document.getElementById("max-links") as HTMLInputElement;
 const minimizeBtn = document.getElementById("minimize-btn") as HTMLButtonElement;
+
+const removeLinkProbLowSlider = document.getElementById("remove-link-prob-low") as HTMLInputElement;
+const removeLinkProbMediumSlider = document.getElementById("remove-link-prob-medium") as HTMLInputElement;
+const removeLinkProbHighSlider = document.getElementById("remove-link-prob-high") as HTMLInputElement;
+const removeLinkProbVeryHighSlider = document.getElementById("remove-link-prob-very-high") as HTMLInputElement;
+const removeLinkProbExtremelyHighSlider = document.getElementById("remove-link-prob-extremely-high") as HTMLInputElement;
+
 const controlsPanel = document.getElementById("controls-panel")!;
 const pauseIcon = document.getElementById("pause-icon")!;
 const playIcon = document.getElementById("play-icon")!;
@@ -124,6 +131,32 @@ linksPerTickInput.addEventListener('input', () => {
 maxLinksInput.addEventListener('input', () => {
     maxLinks = parseInt(maxLinksInput.value);
 });
+
+function updateProbabilities() {
+    const probMap = new Map<number, number>();
+    probMap.set(2, parseInt(removeLinkProbLowSlider.value));
+    probMap.set(3, parseInt(removeLinkProbMediumSlider.value));
+    probMap.set(4, parseInt(removeLinkProbHighSlider.value));
+    probMap.set(5, parseInt(removeLinkProbVeryHighSlider.value));
+    probMap.set(6, parseInt(removeLinkProbExtremelyHighSlider.value));
+
+    manager.updateRemovalProbabilities(probMap);
+}
+
+const sliders = [
+    removeLinkProbLowSlider,
+    removeLinkProbMediumSlider,
+    removeLinkProbHighSlider,
+    removeLinkProbVeryHighSlider,
+    removeLinkProbExtremelyHighSlider
+];
+
+sliders.forEach(slider => {
+    slider.addEventListener('input', updateProbabilities);
+});
+
+// Initial probability setup
+updateProbabilities();
 
 minimizeBtn.addEventListener('click', () => {
     controlsPanel.classList.toggle('minimized');

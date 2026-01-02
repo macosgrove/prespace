@@ -176,5 +176,59 @@ describe('GraphManager', () => {
             expect(data.links.length).toBe(0);
             expect(data.nodes.length).toBe(0);
         });
+
+        describe('updateRemovalProbabilities', () => {
+            it('should map slider values to logarithmic probabilities', () => {
+                const manager = new GraphManager(1);
+
+                // We'll use a density 2 link (initial link) to test different slider values
+                const data = manager.getGraphData();
+                const link = data.links[0];
+                // Verify link density is 2 (source has 1 link, target has 1 link)
+                expect(link.source.links.length + link.target.links.length).toBe(2);
+
+                // Test Value 10 -> Probability 1
+                manager.updateRemovalProbabilities(new Map([[2, 10]]));
+                expect(manager['removeLinkProbability'](link)).toBeCloseTo(1);
+
+                // Test Value 1 -> Probability 1e-5
+                manager.updateRemovalProbabilities(new Map([[2, 1]]));
+                expect(manager['removeLinkProbability'](link)).toBeCloseTo(1e-5, 6);
+
+                // Test Value 0 -> Probability 0
+                manager.updateRemovalProbabilities(new Map([[2, 0]]));
+                expect(manager['removeLinkProbability'](link)).toBe(0);
+
+                // Test Intermediate Value 5.5 -> Probability 10^-2.5 (~0.00316)
+                manager.updateRemovalProbabilities(new Map([[2, 5.5]]));
+                expect(manager['removeLinkProbability'](link)).toBeCloseTo(0.003162, 6);
+            });
+
+            it('should handle different density levels independently', () => {
+                const manager = new GraphManager(1);
+
+                // Map density 2 to 10 (Prob 1) and density 3 to 0 (Prob 0)
+                manager.updateRemovalProbabilities(new Map([
+                    [2, 10],
+                    [3, 0]
+                ]));
+
+                const data = manager.getGraphData();
+                const link2 = data.links[0]; // Density 2
+
+                // Create a density 3 link
+                const n1 = manager.newNode();
+                const n2 = manager.newNode();
+                const l3 = { id: 99, source: n1, target: n2 } as any;
+                // Manually add links to n1 and n2 to reach total weight 3
+                n1.links.push(l3);
+                n2.links.push(l3);
+                const extraLink = { id: 100, source: n2, target: manager.newNode() } as any;
+                n2.links.push(extraLink); // n1 has 1, n2 has 2. Sum = 3.
+
+                expect(manager['removeLinkProbability'](link2)).toBeCloseTo(1);
+                expect(manager['removeLinkProbability'](l3)).toBe(0);
+            });
+        });
     });
 });
