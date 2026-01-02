@@ -36,7 +36,7 @@ const manager = new GraphManager({ initialLinks: 1, maxLinks: maxLinks });
 // Initialize Graph
 const Graph = new ForceGraph3D(elem)
     .backgroundColor('#050505')
-    .nodeColor(() => '#00d2ff')
+    .nodeColor('color')
     .nodeRelSize(6)
     .linkColor(() => '#efefd9ff')
     .linkWidth(2)

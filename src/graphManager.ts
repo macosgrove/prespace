@@ -1,6 +1,8 @@
 export interface Node {
     id: number;
     links: Link[];
+    color: string;
+    bornGeneration: number;
 }
 
 export interface Link {
@@ -71,15 +73,31 @@ export class GraphManager {
         // Update nodes with the new link
         target1.links.push(newLink);
         target2.links.push(newLink);
+
+        // Update colors
+        this.updateNodeColor(target1);
+        this.updateNodeColor(target2);
     }
 
     newNode(): Node {
         const newNode: Node = {
             id: this.nextNodeId++,
-            links: []
+            links: [],
+            bornGeneration: this.generation,
+            color: ''
         };
+        this.updateNodeColor(newNode);
         this.nodes.set(newNode.id, newNode);
         return newNode;
+    }
+
+    private updateNodeColor(node: Node) {
+        const hue = node.bornGeneration % 360;
+        const saturation = 100;
+        // Lightness: 10% (1 link) to 100% (maxLinks links)
+        const linkCount = node.links.length;
+        const lightness = 10 + (Math.min(1, linkCount / this.maxLinks) * 90);
+        node.color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     }
 
     removeNode(nodeId: number) {
@@ -150,11 +168,13 @@ export class GraphManager {
 
         // Remove the link reference from both nodes
         sourceNode.links = sourceNode.links.filter(l => l.id !== linkId);
+        this.updateNodeColor(sourceNode);
         if (sourceNode.links.length === 0) {
             this.nodes.delete(sourceNode.id);
         }
 
         targetNode.links = targetNode.links.filter(l => l.id !== linkId);
+        this.updateNodeColor(targetNode);
         if (targetNode.links.length === 0) {
             this.nodes.delete(targetNode.id);
         }

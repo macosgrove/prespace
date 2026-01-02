@@ -211,5 +211,35 @@ describe('GraphManager', () => {
             manager.reset();
             expect(manager.getGeneration()).toBe(0);
         });
+        describe('Node Coloring', () => {
+            it('should assign color based on birth generation and connectivity', () => {
+                const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
+                const data = manager.getGraphData();
+                const node = data.nodes[0];
+
+                // Gen 0, 1 link -> hue 0, lightness 10 + (1/10 * 90) = 19%
+                expect(node.bornGeneration).toBe(0);
+                expect(node.color).toBe('hsl(0, 100%, 19%)');
+
+                // Add more links to the same node
+                // Connect to a new node
+                manager.addLinks({ linkCount: 1, addNodeProbability: 1 });
+                // The node still has bornGeneration 0, but now 2 links
+                // Lightness 10 + (2/10 * 90) = 28%
+                expect(node.color).toBe('hsl(0, 100%, 28%)');
+            });
+
+            it('should change hue based on current generation when node is born', () => {
+                const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
+                manager.updateGeneration(); // Gen 1
+                manager.updateGeneration(); // Gen 2
+
+                const newNode = manager.newNode();
+                expect(newNode.bornGeneration).toBe(2);
+                // 0 links (initially), but updateNodeColor is called in newNode
+                // hue 2, lightness 10%
+                expect(newNode.color).toBe('hsl(2, 100%, 10%)');
+            });
+        });
     });
 });
