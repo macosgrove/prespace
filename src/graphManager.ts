@@ -17,6 +17,7 @@ export interface GraphData {
 export class GraphManager {
     private nextNodeId: number = 0;
     private nextLinkId: number = 0;
+    private generation: number = 0;
     private nodes: Map<number, Node> = new Map();
     private links: Map<number, Link> = new Map();
     private removalProbabilities: Map<number, number> = new Map();
@@ -29,6 +30,14 @@ export class GraphManager {
 
     setMaxLinks(val: number) {
         this.maxLinks = val;
+    }
+
+    getGeneration() {
+        return this.generation;
+    }
+
+    updateGeneration() {
+        this.generation++;
     }
 
     addLinks({ linkCount = 1, addNodeProbability = 1 }: { linkCount?: number, addNodeProbability?: number } = {}) {
@@ -171,14 +180,12 @@ export class GraphManager {
         return Math.random() < probability;
     }
 
-    resetIfEmpty() {
-        if (this.nodes.size === 0) {
-            this.addLinks();
-        }
-    }
-
-    clearGraph() {
+    reset() {
         this.nodes.clear();
         this.links.clear();
+        this.generation = 0;
+        this.nextNodeId = 0;
+        this.nextLinkId = 0;
+        this.addLinks();
     }
 }

@@ -81,20 +81,11 @@ describe('GraphManager', () => {
         expect(newData.nodes.length).toBe(0);
     });
 
-    it('should restart with a new link joining two nodes if resetIfEmpty is called on an empty graph', () => {
+    it('should restart with a new link joining two nodes if reset is called', () => {
         const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
-        const initialSourceId = manager.getGraphData().nodes[0].id;
-        const initialTargetId = manager.getGraphData().nodes[1].id;
-
-        manager.removeNode(initialSourceId);
-        manager.removeNode(initialTargetId);
-        expect(manager.getGraphData().nodes.length).toBe(0);
-        expect(manager.getGraphData().links.length).toBe(0);
-
-        manager.resetIfEmpty();
+        manager.reset();
         const newData = manager.getGraphData();
         expect(newData.nodes.length).toBe(2);
-        expect(newData.nodes[0].id).not.toBe(initialSourceId);
         expect(newData.links.length).toBe(1);
     });
 
@@ -154,13 +145,13 @@ describe('GraphManager', () => {
             const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
             manager.setMaxLinks(6); // Weight range [2, 12] maps to slider keys [1, 5]
 
-            // Map keys 1-5 to slider values 0-10
+            // Map keys 1-5 to slider values 0-100
             manager.setRemovalProbabilities(new Map([
-                [1, 0],
-                [2, 0],
-                [3, 5],
-                [4, 10],
-                [5, 10]
+                [1, 0],   // Slider 0
+                [2, 0],   // Slider 0
+                [3, 50],  // Slider 50
+                [4, 100], // Slider 100
+                [5, 100]  // Slider 100
             ]));
 
             const data = manager.getGraphData();
@@ -171,8 +162,8 @@ describe('GraphManager', () => {
 
             // Test weight 7 (exactly in middle of [2, 12] is density 3.0)
             // Weight 7 maps to density level 1 + (7-2)*(4/10) = 3.0
-            // Slider value at key 3 is 5.
-            // P(slider 5) = 10^(5*(5-10)/9) = 10^-2.777...
+            // Slider value at key 3 is 50.
+            // P(slider 50) = 10^((50-100)/20) = 10^-2.5
             const n1 = manager.newNode();
             const n2 = manager.newNode();
             const lTest = { source: n1, target: n2 } as any;
@@ -180,18 +171,12 @@ describe('GraphManager', () => {
             n2.links = new Array(4).fill({}); // Total weight 7
 
             const prob = manager['removeLinkProbability'](lTest);
-            expect(prob).toBeCloseTo(Math.pow(10, (5 * (5 - 10)) / 9), 6);
+            expect(prob).toBeCloseTo(Math.pow(10, -2.5), 6);
 
-            // Test weight 9.5 (density 4.0)
-            // L = 1 + (9.5 - 2) * (4/10) = 1 + 3.0 = 4.0
-            // Slider value at key 4 is 10 -> Prob 1
-            n1.links = new Array(4).fill({});
-            n2.links = new Array(5).fill({}); // Sum 9 does not map to 4.0
-            // Need sum such that 1 + (sum-2)*0.4 = 4.0 => (sum-2)*0.4 = 3 => sum-2 = 7.5 => sum = 9.5
-            // weight 9.5 is impossible with integers, let's use weight 12 -> density 5.0
+            // Test weight 12 -> density 5.0
+            // slider value at key 5 is 100 -> Prob 1
             n1.links = new Array(6).fill({});
-            n2.links = new Array(6).fill({}); // Total weight 12 -> density 5.0
-            // slider value at key 5 is 10 -> Prob 1
+            n2.links = new Array(6).fill({}); // Total weight 12
             expect(manager['removeLinkProbability'](lTest)).toBeCloseTo(1, 6);
         });
 
@@ -202,6 +187,29 @@ describe('GraphManager', () => {
 
             // Should return 0 or default safely
             expect(manager['removeLinkProbability'](link)).toBe(0);
+        });
+    });
+
+    describe('Generation Tracking', () => {
+        it('should track and update graph generations', () => {
+            const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
+            expect(manager.getGeneration()).toBe(0);
+
+            manager.updateGeneration();
+            expect(manager.getGeneration()).toBe(1);
+
+            manager.updateGeneration();
+            expect(manager.getGeneration()).toBe(2);
+        });
+
+        it('should reset generation to 0 when graph is reset', () => {
+            const manager = new GraphManager({ initialLinks: 1, maxLinks: 10 });
+            manager.updateGeneration();
+            manager.updateGeneration();
+            expect(manager.getGeneration()).toBe(2);
+
+            manager.reset();
+            expect(manager.getGeneration()).toBe(0);
         });
     });
 });

@@ -4,12 +4,13 @@ import ForceGraph3D from '3d-force-graph';
 import { GraphManager } from './graphManager';
 
 const elem = document.getElementById("three-d-graph")!;
+const generationCountEl = document.getElementById("generation-count")!;
 const nodeCountEl = document.getElementById("node-count")!;
 const linkCountEl = document.getElementById("link-count")!;
 const toggleBtn = document.getElementById("toggle-dynamic") as HTMLButtonElement;
-const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
+const resetViewBtn = document.getElementById("reset-view-btn") as HTMLButtonElement;
 const stepBtn = document.getElementById("step-btn") as HTMLButtonElement;
-const clearBtn = document.getElementById("clear-btn") as HTMLButtonElement;
+const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
 const speedSlider = document.getElementById("speed-slider") as HTMLInputElement;
 const linksPerTickInput = document.getElementById("links-per-tick") as HTMLInputElement;
 const maxLinksInput = document.getElementById("max-links") as HTMLInputElement;
@@ -30,7 +31,7 @@ let tickSpeed = parseInt(speedSlider.value);
 let linksPerTick = parseInt(linksPerTickInput.value);
 let maxLinks = parseInt(maxLinksInput.value);
 let growthTimeout: number | null = null;
-const manager = new GraphManager({initialLinks: 1, maxLinks: maxLinks});
+const manager = new GraphManager({ initialLinks: 1, maxLinks: maxLinks });
 
 // Initialize Graph
 const Graph = new ForceGraph3D(elem)
@@ -57,7 +58,7 @@ function tick() {
 }
 
 function performStep() {
-    manager.resetIfEmpty();
+    manager.updateGeneration();
     manager.addLinks({ linkCount: linksPerTick, addNodeProbability: 0.5 });
     manager.removeLinks();
     Graph.graphData(manager.getGraphData());
@@ -83,6 +84,7 @@ function updateStats() {
     const { nodes, links } = manager.getGraphData();
     nodeCountEl.innerText = nodes.length.toString();
     linkCountEl.innerText = links.length.toString();
+    generationCountEl.innerText = manager.getGeneration().toString();
 }
 
 // UI Event Listeners
@@ -99,7 +101,7 @@ toggleBtn.addEventListener('click', () => {
     toggleBtn.classList.toggle('btn-primary', !isPaused);
 });
 
-resetBtn.addEventListener('click', () => {
+resetViewBtn.addEventListener('click', () => {
     Graph.cameraPosition({ x: 0, y: 0, z: 1000 }, { x: 0, y: 0, z: 0 }, 1000);
 });
 
@@ -109,8 +111,8 @@ stepBtn.addEventListener('click', () => {
     }
 });
 
-clearBtn.addEventListener('click', () => {
-    manager.clearGraph();
+resetBtn.addEventListener('click', () => {
+    manager.reset();
     Graph.graphData(manager.getGraphData());
     updateStats();
 });
