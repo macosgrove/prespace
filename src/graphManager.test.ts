@@ -20,7 +20,7 @@ describe('GraphManager', () => {
         expect(data.links.length).toBe(2);
         const newNode = data.nodes[2];
         const newLink = data.links[1];
-        expect(newLink.target).toBe(newNode.id);
+        expect(newLink.target.id).toBe(newNode.id);
     });
 
     it('should add a link connecting two existing nodes', () => {
@@ -45,55 +45,41 @@ describe('GraphManager', () => {
         manager.removeNode(initialNode.id);
         const data = manager.getGraphData();
 
-        expect(data.nodes.length).toBe(1);
+        expect(data.nodes.length).toBe(0); // Rest of the graph was orphaned
         expect(data.links.length).toBe(0);
     });
 
-    it('should handle object-based links during removal', () => {
+    it('should have object-based links', () => {
         const manager = new GraphManager(1);
-        const initialNode = manager.getGraphData().nodes[0];
-        manager.addLinks();
-
-        // Simulate 3d-force-graph behavior where it replaces IDs with objects
-        const dataWithObjects = manager.getGraphData();
-        dataWithObjects.links[0].source = { id: dataWithObjects.links[0].source };
-        dataWithObjects.links[0].target = { id: dataWithObjects.links[0].target };
-
-        // Explicitly set the data back if we had a setter, but since we handle it in filter:
-        // We'll trust the filter logic:
-        // This is a bit tricky to test without a setter, but the removal logic handles it.
+        const data = manager.getGraphData();
+        expect(typeof data.links[0].source).toBe('object');
+        expect(typeof data.links[0].target).toBe('object');
     });
 
-    it('should track linkIds on nodes', () => {
+    it('should track links on nodes', () => {
         const manager = new GraphManager(1);
         const data = manager.getGraphData();
         const link = data.links[0];
 
-        expect(data.nodes[0].linkIds).toContain(link.id);
-        expect(data.nodes[1].linkIds).toContain(link.id);
+        expect(data.nodes[0].links.map(l => l.id)).toContain(link.id);
+        expect(data.nodes[1].links.map(l => l.id)).toContain(link.id);
 
         manager.removeNode(data.nodes[0].id);
         const newData = manager.getGraphData();
-        const remainingNode = newData.nodes.find(n => n.id === data.nodes[1].id);
-        expect(remainingNode?.linkIds).not.toContain(link.id);
+        // The other node should be gone too!
+        expect(newData.nodes.length).toBe(0);
     });
 
-    it('should remove a specific link and update nodes', () => {
+    it('should remove a specific link and cleanup nodes', () => {
         const manager = new GraphManager(1);
         const data = manager.getGraphData();
         const linkId = data.links[0].id;
-        const sourceNodeId = data.nodes[0].id;
-        const targetNodeId = data.nodes[1].id;
-
-        expect(data.nodes[0].linkIds).toContain(linkId);
-        expect(data.nodes[1].linkIds).toContain(linkId);
 
         manager.removeLink(linkId);
         const newData = manager.getGraphData();
 
         expect(newData.links.length).toBe(0);
-        expect(newData.nodes[0].linkIds).not.toContain(linkId);
-        expect(newData.nodes[1].linkIds).not.toContain(linkId);
+        expect(newData.nodes.length).toBe(0);
     });
 
     it('should restart with a new link joining two nodes if resetIfEmpty is called on an empty graph', () => {

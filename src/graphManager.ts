@@ -1,12 +1,12 @@
 export interface Node {
     id: number;
-    linkIds: number[];
+    links: Link[];
 }
 
 export interface Link {
     id: number;
-    source: any; // Can be ID or object
-    target: any;
+    source: Node;
+    target: Node;
 }
 
 export interface GraphData {
@@ -38,15 +38,15 @@ export class GraphManager {
 
         const newLink: Link = {
             id: this.nextLinkId++,
-            source: target1.id,
-            target: target2.id
+            source: target1,
+            target: target2
         };
 
         this.links.set(newLink.id, newLink);
 
-        // Update nodes with the new link ID
-        target1.linkIds.push(newLink.id);
-        target2.linkIds.push(newLink.id);
+        // Update nodes with the new link
+        target1.links.push(newLink);
+        target2.links.push(newLink);
 
         return target2;
     }
@@ -54,7 +54,7 @@ export class GraphManager {
     newNode(): Node {
         const newNode: Node = {
             id: this.nextNodeId++,
-            linkIds: []
+            links: []
         };
         this.nodes.set(newNode.id, newNode);
         return newNode;
@@ -64,10 +64,10 @@ export class GraphManager {
         const node = this.nodes.get(nodeId);
         if (!node) return;
 
-        // Iterate over a copy of linkIds attached to this node
-        const linkIdsToRemove = [...node.linkIds];
-        for (const linkId of linkIdsToRemove) {
-            this.removeLink(linkId);
+        // Iterate over a copy of links attached to this node
+        const linksToRemove = [...node.links];
+        for (const link of linksToRemove) {
+            this.removeLink(link.id);
         }
 
         // Finally remove the node
@@ -83,11 +83,8 @@ export class GraphManager {
     }
 
     removeLinkProbability(link: Link): number {
-        const sourceNode = this.nodes.get(this.getNodeId(link.source));
-        const targetNode = this.nodes.get(this.getNodeId(link.target));
-
-        const sourceWeight = sourceNode?.linkIds?.length || 0;
-        const targetWeight = targetNode?.linkIds?.length || 0;
+        const sourceWeight = link.source.links.length;
+        const targetWeight = link.target.links.length;
         const nodeWeight: number = sourceWeight + targetWeight;
 
         const probabilityMap: Map<number, number> = new Map([
@@ -100,34 +97,22 @@ export class GraphManager {
         return probabilityMap.get(Math.min(nodeWeight, 6)) || 0;
     }
 
-    private getNodeId(sourceOrTarget: any): number {
-        return typeof sourceOrTarget === 'object' ? sourceOrTarget.id : sourceOrTarget;
-    }
-
-
     removeLink(linkId: number) {
         const link = this.links.get(linkId);
         if (!link) return;
 
-        // Find the connected nodes
-        const sId = this.getNodeId(link.source);
-        const tId = this.getNodeId(link.target);
+        const sourceNode = link.source;
+        const targetNode = link.target;
 
         // Remove the link reference from both nodes
-        const sourceNode = this.nodes.get(sId);
-        if (sourceNode) {
-            sourceNode.linkIds = sourceNode.linkIds.filter(id => id !== linkId);
-            if (sourceNode.linkIds.length === 0) {
-                this.nodes.delete(sId);
-            }
+        sourceNode.links = sourceNode.links.filter(l => l.id !== linkId);
+        if (sourceNode.links.length === 0) {
+            this.nodes.delete(sourceNode.id);
         }
 
-        const targetNode = this.nodes.get(tId);
-        if (targetNode) {
-            targetNode.linkIds = targetNode.linkIds.filter(id => id !== linkId);
-            if (targetNode.linkIds.length === 0) {
-                this.nodes.delete(tId);
-            }
+        targetNode.links = targetNode.links.filter(l => l.id !== linkId);
+        if (targetNode.links.length === 0) {
+            this.nodes.delete(targetNode.id);
         }
 
         // Remove the link itself
