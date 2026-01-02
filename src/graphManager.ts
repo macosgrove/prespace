@@ -22,7 +22,7 @@ export class GraphManager {
     private removalProbabilities: Map<number, number> = new Map();
     private maxLinks: number;
 
-    constructor({initialLinks, maxLinks}: {initialLinks: number, maxLinks: number}) {
+    constructor({ initialLinks, maxLinks }: { initialLinks: number, maxLinks: number }) {
         this.maxLinks = maxLinks;
         this.addLinks({ linkCount: initialLinks, addNodeProbability: 1 });
     }
@@ -38,13 +38,18 @@ export class GraphManager {
     }
 
     addLink(addNodeProbability: number = 0.5) {
-        const target1 = this.getRandomNode() || this.newNode();
-        const target2 = this.shouldDo(addNodeProbability) ? this.newNode() : this.getRandomNode() || this.newNode();
+        // Select potential targets: either existing or placeholder for new
+        let t1: Node | null = this.getRandomNode();
+        let t2: Node | null = this.shouldDo(addNodeProbability) ? null : this.getRandomNode();
 
-        // Check maxLinks constraint
-        if (target1.links.length >= this.maxLinks || target2.links.length >= this.maxLinks) {
+        // Check maxLinks constraint for existing targets
+        if ((t1 && t1.links.length >= this.maxLinks) || (t2 && t2.links.length >= this.maxLinks)) {
             return;
         }
+
+        // Now safe to instantiate or finalize targets
+        const target1 = t1 || this.newNode();
+        const target2 = t2 || this.newNode();
 
         const newLink: Link = {
             id: this.nextLinkId++,
@@ -94,8 +99,9 @@ export class GraphManager {
         const sourceWeight = link.source.links.length;
         const targetWeight = link.target.links.length;
         const nodeWeight: number = sourceWeight + targetWeight;
+        console.log(`Node weight: ${nodeWeight}`)
 
-        // Map nodeWeight [2, maxLinks * 2] to slider range [1, 5]
+        // Map nodeWeight [2, maxLinks * 2] to slider keys [1, 5]
         const maxWeight = this.maxLinks * 2;
         if (maxWeight <= 2) return 0; // Avoid division by zero
 
@@ -108,6 +114,8 @@ export class GraphManager {
 
         const lowerVal = this.removalProbabilities.get(lowerKey) || 0;
         const upperVal = this.removalProbabilities.get(upperKey) || 0;
+        console.log(`Lower key: ${lowerKey}, Upper key: ${upperKey}, Fraction: ${fraction}`);
+        console.log(`Lower value: ${lowerVal}, Upper value: ${upperVal}`);
 
         // Linear interpolation of slider values
         const interpolatedSliderValue = lowerVal + fraction * (upperVal - lowerVal);
@@ -115,8 +123,9 @@ export class GraphManager {
         if (interpolatedSliderValue <= 0) return 0;
 
         // Apply logarithmic transformation to the interpolated slider value
-        // Formula: 10^((5/9) * (value - 10))
-        return Math.pow(10, (5 * (interpolatedSliderValue - 10)) / 9);
+        const probability = Math.pow(10, (5 * (interpolatedSliderValue - 100)) / 100);
+        console.log(`Interpolated Slider Value: ${interpolatedSliderValue}, Probability: ${probability}`);
+        return probability;
     }
 
     setRemovalProbabilities(map: Map<number, number>) {
