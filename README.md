@@ -1,6 +1,6 @@
 # PreSpace 3D Force Graph
 
-An interactive, dynamic 3D force-directed graph visualization built with [3d-force-graph](https://github.com/vasturiano/3d-force-graph) and [Vite](https://vitejs.dev/).
+An interactive, dynamic 3D force-directed graph visualization built with [3d-force-graph](https://github.com/vasturiano/3d-force-graph) and [Vite](https://vitejs.dev/), with assistance from Google Antigravity and Gemini Flash.
 
 ## Features
 
