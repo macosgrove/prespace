@@ -11,7 +11,8 @@ const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
 const stepBtn = document.getElementById("step-btn") as HTMLButtonElement;
 const clearBtn = document.getElementById("clear-btn") as HTMLButtonElement;
 const speedSlider = document.getElementById("speed-slider") as HTMLInputElement;
-const edgesPerTickInput = document.getElementById("links-per-tick") as HTMLInputElement;
+const linksPerTickInput = document.getElementById("links-per-tick") as HTMLInputElement;
+const maxLinksInput = document.getElementById("max-links") as HTMLInputElement;
 const minimizeBtn = document.getElementById("minimize-btn") as HTMLButtonElement;
 const controlsPanel = document.getElementById("controls-panel")!;
 const pauseIcon = document.getElementById("pause-icon")!;
@@ -19,7 +20,8 @@ const playIcon = document.getElementById("play-icon")!;
 
 let isPaused = false;
 let tickSpeed = parseInt(speedSlider.value);
-let linksPerTick = parseInt(edgesPerTickInput.value);
+let linksPerTick = parseInt(linksPerTickInput.value);
+let maxLinks = parseInt(maxLinksInput.value);
 let growthTimeout: number | null = null;
 const manager = new GraphManager(1);
 
@@ -48,8 +50,8 @@ function tick() {
 }
 
 function performStep() {
-    manager.resetIfEmpty();
-    manager.addLinks({ linkCount: linksPerTick, addNodeProbability: 0.5 });
+    manager.resetIfEmpty(maxLinks);
+    manager.addLinks({ linkCount: linksPerTick, addNodeProbability: 0.5, maxLinks });
     manager.removeLinks();
     Graph.graphData(manager.getGraphData());
     updateStats();
@@ -113,6 +115,14 @@ speedSlider.addEventListener('input', () => {
     // So if slider is at 10 (left), it should be 2000ms. If at 2000 (right), it should be 10ms.
     const sliderVal = parseInt(speedSlider.value);
     tickSpeed = 2010 - sliderVal;
+});
+
+linksPerTickInput.addEventListener('input', () => {
+    linksPerTick = parseInt(linksPerTickInput.value);
+});
+
+maxLinksInput.addEventListener('input', () => {
+    maxLinks = parseInt(maxLinksInput.value);
 });
 
 minimizeBtn.addEventListener('click', () => {

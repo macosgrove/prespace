@@ -13,7 +13,7 @@ describe('GraphManager', () => {
         const manager = new GraphManager(1);
         const initialId = manager.getGraphData().nodes[0].id;
 
-        manager.addLinks({ linkCount: 1, addNodeProbability: 1 });
+        manager.addLinks({ linkCount: 1, addNodeProbability: 1, maxLinks: 10 });
         const data = manager.getGraphData();
 
         expect(data.nodes.length).toBe(3);
@@ -29,7 +29,7 @@ describe('GraphManager', () => {
         expect(data.nodes.length).toBe(101);
         expect(data.links.length).toBe(100);
 
-        manager.addLinks({ linkCount: 1, addNodeProbability: 0 });
+        manager.addLinks({ linkCount: 1, addNodeProbability: 0, maxLinks: 10 });
         const newData = manager.getGraphData();
         expect(newData.nodes.length).toBe(101);
         expect(newData.links.length).toBe(101);
@@ -93,10 +93,25 @@ describe('GraphManager', () => {
         expect(manager.getGraphData().nodes.length).toBe(0);
         expect(manager.getGraphData().links.length).toBe(0);
 
-        manager.resetIfEmpty();
+        manager.resetIfEmpty(10);
         const newData = manager.getGraphData();
         expect(newData.nodes.length).toBe(2);
         expect(newData.nodes[0].id).not.toBe(initialSourceId); // Should have a new persistent ID
+        expect(newData.links.length).toBe(1);
+    });
+
+    it('should respect maxLinks constraint', () => {
+        const manager = new GraphManager(1);
+        const data = manager.getGraphData();
+        const node = data.nodes[0];
+
+        // node currently has 1 link. Set maxLinks to 1.
+        // Try to add another link to this existing node by setting addNodeProbability to 0.
+        manager.addLinks({ linkCount: 1, addNodeProbability: 0, maxLinks: 1 });
+
+        const newData = manager.getGraphData();
+        // Since both existing nodes already have 1 link, and maxLinks is 1, 
+        // addLink should return undefined and no new link should be added.
         expect(newData.links.length).toBe(1);
     });
 

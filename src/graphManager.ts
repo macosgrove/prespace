@@ -21,20 +21,23 @@ export class GraphManager {
     private links: Map<number, Link> = new Map();
 
     constructor(initialLinks: number = 1) {
-        this.addLinks({ linkCount: initialLinks, addNodeProbability: 1 });
+        this.addLinks({ linkCount: initialLinks, addNodeProbability: 1, maxLinks: initialLinks });
     }
 
-    addLinks({ linkCount = 1, addNodeProbability = 1 }: { linkCount?: number, addNodeProbability?: number } = {}): Node | undefined {
-        let lastNode: Node | undefined;
+    addLinks({ linkCount = 1, addNodeProbability = 1, maxLinks }: { linkCount?: number, addNodeProbability?: number, maxLinks: number }) {
         for (let i = 0; i < linkCount; i++) {
-            lastNode = this.addLink(addNodeProbability);
+            this.addLink(addNodeProbability, maxLinks);
         }
-        return lastNode;
     }
 
-    addLink(addNodeProbability: number = 0.5): Node {
+    addLink(addNodeProbability: number = 0.5, maxLinks: number) {
         const target1 = this.getRandomNode() || this.newNode();
         const target2 = this.shouldDo(addNodeProbability) ? this.newNode() : this.getRandomNode() || this.newNode();
+
+        // Check maxLinks constraint
+        if (target1.links.length >= maxLinks || target2.links.length >= maxLinks) {
+            return;
+        }
 
         const newLink: Link = {
             id: this.nextLinkId++,
@@ -47,8 +50,6 @@ export class GraphManager {
         // Update nodes with the new link
         target1.links.push(newLink);
         target2.links.push(newLink);
-
-        return target2;
     }
 
     newNode(): Node {
@@ -136,9 +137,9 @@ export class GraphManager {
         return Math.random() < probability;
     }
 
-    resetIfEmpty() {
+    resetIfEmpty(maxLinks: number = 100) {
         if (this.nodes.size === 0) {
-            this.addLinks();
+            this.addLinks({ maxLinks });
         }
     }
 
