@@ -9,6 +9,8 @@ An interactive, dynamic 3D force-directed graph visualization built with [3d-for
 - **Persistent ID Management**: Robust state handling via `GraphManager` to prevent crashes during rapid deletions.
 - **Premium UI**: Dark mode, glassmorphism stats panel, and smooth camera controls.
 
+<img width="1283" height="981" alt="Screenshot 2026-01-02 at 5 39 05 pm" src="https://github.com/user-attachments/assets/d1c6fc7a-7ddc-4659-b225-3b2bef39c828" />
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) (v20 or later recommended)
