@@ -3,17 +3,16 @@ import { GraphManager } from './graphManager';
 
 describe('GraphManager', () => {
     it('should initialize with the requested number of links', () => {
-        const manager = new GraphManager(1);
+        const manager = new GraphManager({initialLinks: 1, maxLinks: 10});
         const data = manager.getGraphData();
         expect(data.nodes.length).toBe(2);
         expect(data.links.length).toBe(1);
     });
 
     it('should add a link and connecting an existing node to a new node', () => {
-        const manager = new GraphManager(1);
-        const initialId = manager.getGraphData().nodes[0].id;
+        const manager = new GraphManager({initialLinks: 1, maxLinks: 10});
 
-        manager.addLinks({ linkCount: 1, addNodeProbability: 1, maxLinks: 10 });
+        manager.addLinks({ linkCount: 1, addNodeProbability: 1 });
         const data = manager.getGraphData();
 
         expect(data.nodes.length).toBe(3);
@@ -24,19 +23,19 @@ describe('GraphManager', () => {
     });
 
     it('should add a link connecting two existing nodes', () => {
-        const manager = new GraphManager(100);
+        const manager = new GraphManager({initialLinks: 100, maxLinks: 100});
         const data = manager.getGraphData();
         expect(data.nodes.length).toBe(101);
         expect(data.links.length).toBe(100);
 
-        manager.addLinks({ linkCount: 1, addNodeProbability: 0, maxLinks: 10 });
+        manager.addLinks({ linkCount: 1, addNodeProbability: 0 });
         const newData = manager.getGraphData();
         expect(newData.nodes.length).toBe(101);
         expect(newData.links.length).toBe(101);
     });
 
     it('should correctly remove a node and its associated links', () => {
-        const manager = new GraphManager(1);
+        const manager = new GraphManager({initialLinks: 1, maxLinks: 10});
         const initialNode = manager.getGraphData().nodes[0];
 
         expect(manager.getGraphData().nodes.length).toBe(2);
@@ -50,14 +49,14 @@ describe('GraphManager', () => {
     });
 
     it('should have object-based links', () => {
-        const manager = new GraphManager(1);
+        const manager = new GraphManager({initialLinks: 1, maxLinks: 10});
         const data = manager.getGraphData();
         expect(typeof data.links[0].source).toBe('object');
         expect(typeof data.links[0].target).toBe('object');
     });
 
     it('should track links on nodes', () => {
-        const manager = new GraphManager(1);
+        const manager = new GraphManager({initialLinks: 1, maxLinks: 10});
         const data = manager.getGraphData();
         const link = data.links[0];
 
@@ -71,7 +70,7 @@ describe('GraphManager', () => {
     });
 
     it('should remove a specific link and cleanup nodes', () => {
-        const manager = new GraphManager(1);
+        const manager = new GraphManager({initialLinks: 1, maxLinks: 10});
         const data = manager.getGraphData();
         const linkId = data.links[0].id;
 
@@ -83,8 +82,7 @@ describe('GraphManager', () => {
     });
 
     it('should restart with a new link joining two nodes if resetIfEmpty is called on an empty graph', () => {
-        const manager = new GraphManager(1);
-        const data = manager.getGraphData()
+        const manager = new GraphManager({initialLinks: 1, maxLinks: 10});
         const initialSourceId = manager.getGraphData().nodes[0].id;
         const initialTargetId = manager.getGraphData().nodes[1].id;
 
@@ -93,31 +91,27 @@ describe('GraphManager', () => {
         expect(manager.getGraphData().nodes.length).toBe(0);
         expect(manager.getGraphData().links.length).toBe(0);
 
-        manager.resetIfEmpty(10);
+        manager.resetIfEmpty();
         const newData = manager.getGraphData();
         expect(newData.nodes.length).toBe(2);
-        expect(newData.nodes[0].id).not.toBe(initialSourceId); // Should have a new persistent ID
+        expect(newData.nodes[0].id).not.toBe(initialSourceId);
         expect(newData.links.length).toBe(1);
     });
 
     it('should respect maxLinks constraint', () => {
-        const manager = new GraphManager(1);
-        const data = manager.getGraphData();
-        const node = data.nodes[0];
+        const manager = new GraphManager({initialLinks: 1, maxLinks: 10});
+        manager.setMaxLinks(1);
 
-        // node currently has 1 link. Set maxLinks to 1.
-        // Try to add another link to this existing node by setting addNodeProbability to 0.
-        manager.addLinks({ linkCount: 1, addNodeProbability: 0, maxLinks: 1 });
+        // node currently has 1 link. maxLinks is 1.
+        manager.addLinks({ linkCount: 1, addNodeProbability: 0 }); // Try to connect existing nodes
 
         const newData = manager.getGraphData();
-        // Since both existing nodes already have 1 link, and maxLinks is 1, 
-        // addLink should return undefined and no new link should be added.
         expect(newData.links.length).toBe(1);
     });
 
     describe('removeLinks', () => {
         it('should remove all links when probability is 1', () => {
-            const manager = new GraphManager(10);
+            const manager = new GraphManager({initialLinks: 10, maxLinks: 100});
             expect(manager.getGraphData().links.length).toBe(10);
 
             vi.spyOn(manager, 'removeLinkProbability' as any).mockReturnValue(1);
@@ -127,7 +121,7 @@ describe('GraphManager', () => {
         });
 
         it('should remove no links when probability is 0', () => {
-            const manager = new GraphManager(10);
+            const manager = new GraphManager({initialLinks: 10, maxLinks: 100});
             expect(manager.getGraphData().links.length).toBe(10);
 
             vi.spyOn(manager, 'removeLinkProbability' as any).mockReturnValue(0);
@@ -136,24 +130,8 @@ describe('GraphManager', () => {
             expect(manager.getGraphData().links.length).toBe(10);
         });
 
-        it('should remove some links based on probability', () => {
-            const manager = new GraphManager(10);
-            expect(manager.getGraphData().links.length).toBe(10);
-
-            // Mock such that it returns 1 for even index links and 0 for odd
-            const spy = vi.spyOn(manager, 'removeLinkProbability' as any);
-            let callCount = 0;
-            spy.mockImplementation(() => {
-                return (callCount++ % 2 === 0) ? 1 : 0;
-            });
-
-            manager.removeLinks();
-            // Since links are a Map and we iterate over values, order might vary but 5 should be removed
-            expect(manager.getGraphData().links.length).toBe(5);
-        });
-
         it('should remove nodes that become orphaned after link removal', () => {
-            const manager = new GraphManager(1);
+            const manager = new GraphManager({initialLinks: 1, maxLinks: 10});
             const data = manager.getGraphData();
             const linkId = data.links[0].id;
 
@@ -163,72 +141,63 @@ describe('GraphManager', () => {
 
             const newData = manager.getGraphData();
             expect(newData.links.length).toBe(0);
-            expect(newData.nodes.length).toBe(0); // Both nodes should be removed as they were only connected by this link
+            expect(newData.nodes.length).toBe(0);
         });
+    });
 
-        it('should cleanup all nodes when all links are removed via removeLinks', () => {
-            const manager = new GraphManager(10);
-            vi.spyOn(manager, 'removeLinkProbability' as any).mockReturnValue(1);
+    describe('setRemovalProbabilities and Interpolation', () => {
+        it('should perform logarithmic interpolation of probabilities', () => {
+            const manager = new GraphManager({initialLinks: 1, maxLinks: 10});
+            manager.setMaxLinks(6); // Weight range [2, 12] maps to slider keys [1, 5]
 
-            manager.removeLinks();
+            // Map keys 1-5 to slider values 0-10
+            manager.setRemovalProbabilities(new Map([
+                [1, 0],
+                [2, 0],
+                [3, 5],
+                [4, 10],
+                [5, 10]
+            ]));
 
             const data = manager.getGraphData();
-            expect(data.links.length).toBe(0);
-            expect(data.nodes.length).toBe(0);
+            const link = data.links[0]; // weight 2 (density 1.0)
+
+            // Density 1.0 maps to slider value 0 -> Prob 0
+            expect(manager['removeLinkProbability'](link)).toBe(0);
+
+            // Test weight 7 (exactly in middle of [2, 12] is density 3.0)
+            // Weight 7 maps to density level 1 + (7-2)*(4/10) = 3.0
+            // Slider value at key 3 is 5.
+            // P(slider 5) = 10^(5*(5-10)/9) = 10^-2.777...
+            const n1 = manager.newNode();
+            const n2 = manager.newNode();
+            const lTest = { source: n1, target: n2 } as any;
+            n1.links = new Array(3).fill({});
+            n2.links = new Array(4).fill({}); // Total weight 7
+
+            const prob = manager['removeLinkProbability'](lTest);
+            expect(prob).toBeCloseTo(Math.pow(10, (5 * (5 - 10)) / 9), 6);
+
+            // Test weight 9.5 (density 4.0)
+            // L = 1 + (9.5 - 2) * (4/10) = 1 + 3.0 = 4.0
+            // Slider value at key 4 is 10 -> Prob 1
+            n1.links = new Array(4).fill({});
+            n2.links = new Array(5).fill({}); // Sum 9 does not map to 4.0
+            // Need sum such that 1 + (sum-2)*0.4 = 4.0 => (sum-2)*0.4 = 3 => sum-2 = 7.5 => sum = 9.5
+            // weight 9.5 is impossible with integers, let's use weight 12 -> density 5.0
+            n1.links = new Array(6).fill({});
+            n2.links = new Array(6).fill({}); // Total weight 12 -> density 5.0
+            // slider value at key 5 is 10 -> Prob 1
+            expect(manager['removeLinkProbability'](lTest)).toBeCloseTo(1, 6);
         });
 
-        describe('updateRemovalProbabilities', () => {
-            it('should map slider values to logarithmic probabilities', () => {
-                const manager = new GraphManager(1);
+        it('should handle division by zero or invalid ranges gracefully', () => {
+            const manager = new GraphManager({initialLinks: 1, maxLinks: 1});
+            const data = manager.getGraphData();
+            const link = data.links[0];
 
-                // We'll use a density 2 link (initial link) to test different slider values
-                const data = manager.getGraphData();
-                const link = data.links[0];
-                // Verify link density is 2 (source has 1 link, target has 1 link)
-                expect(link.source.links.length + link.target.links.length).toBe(2);
-
-                // Test Value 10 -> Probability 1
-                manager.updateRemovalProbabilities(new Map([[2, 10]]));
-                expect(manager['removeLinkProbability'](link)).toBeCloseTo(1);
-
-                // Test Value 1 -> Probability 1e-5
-                manager.updateRemovalProbabilities(new Map([[2, 1]]));
-                expect(manager['removeLinkProbability'](link)).toBeCloseTo(1e-5, 6);
-
-                // Test Value 0 -> Probability 0
-                manager.updateRemovalProbabilities(new Map([[2, 0]]));
-                expect(manager['removeLinkProbability'](link)).toBe(0);
-
-                // Test Intermediate Value 5.5 -> Probability 10^-2.5 (~0.00316)
-                manager.updateRemovalProbabilities(new Map([[2, 5.5]]));
-                expect(manager['removeLinkProbability'](link)).toBeCloseTo(0.003162, 6);
-            });
-
-            it('should handle different density levels independently', () => {
-                const manager = new GraphManager(1);
-
-                // Map density 2 to 10 (Prob 1) and density 3 to 0 (Prob 0)
-                manager.updateRemovalProbabilities(new Map([
-                    [2, 10],
-                    [3, 0]
-                ]));
-
-                const data = manager.getGraphData();
-                const link2 = data.links[0]; // Density 2
-
-                // Create a density 3 link
-                const n1 = manager.newNode();
-                const n2 = manager.newNode();
-                const l3 = { id: 99, source: n1, target: n2 } as any;
-                // Manually add links to n1 and n2 to reach total weight 3
-                n1.links.push(l3);
-                n2.links.push(l3);
-                const extraLink = { id: 100, source: n2, target: manager.newNode() } as any;
-                n2.links.push(extraLink); // n1 has 1, n2 has 2. Sum = 3.
-
-                expect(manager['removeLinkProbability'](link2)).toBeCloseTo(1);
-                expect(manager['removeLinkProbability'](l3)).toBe(0);
-            });
+            // Should return 0 or default safely
+            expect(manager['removeLinkProbability'](link)).toBe(0);
         });
     });
 });

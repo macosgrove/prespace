@@ -20,23 +20,29 @@ export class GraphManager {
     private nodes: Map<number, Node> = new Map();
     private links: Map<number, Link> = new Map();
     private removalProbabilities: Map<number, number> = new Map();
+    private maxLinks: number;
 
-    constructor(initialLinks: number = 1) {
-        this.addLinks({ linkCount: initialLinks, addNodeProbability: 1, maxLinks: initialLinks });
+    constructor({initialLinks, maxLinks}: {initialLinks: number, maxLinks: number}) {
+        this.maxLinks = maxLinks;
+        this.addLinks({ linkCount: initialLinks, addNodeProbability: 1 });
     }
 
-    addLinks({ linkCount = 1, addNodeProbability = 1, maxLinks }: { linkCount?: number, addNodeProbability?: number, maxLinks: number }) {
+    setMaxLinks(val: number) {
+        this.maxLinks = val;
+    }
+
+    addLinks({ linkCount = 1, addNodeProbability = 1 }: { linkCount?: number, addNodeProbability?: number } = {}) {
         for (let i = 0; i < linkCount; i++) {
-            this.addLink(addNodeProbability, maxLinks);
+            this.addLink(addNodeProbability);
         }
     }
 
-    addLink(addNodeProbability: number = 0.5, maxLinks: number) {
+    addLink(addNodeProbability: number = 0.5) {
         const target1 = this.getRandomNode() || this.newNode();
         const target2 = this.shouldDo(addNodeProbability) ? this.newNode() : this.getRandomNode() || this.newNode();
 
         // Check maxLinks constraint
-        if (target1.links.length >= maxLinks || target2.links.length >= maxLinks) {
+        if (target1.links.length >= this.maxLinks || target2.links.length >= this.maxLinks) {
             return;
         }
 
@@ -89,22 +95,32 @@ export class GraphManager {
         const targetWeight = link.target.links.length;
         const nodeWeight: number = sourceWeight + targetWeight;
 
-        // Clamp weight between 2 and 6 for probability lookup
-        const lookupKey = Math.max(2, Math.min(nodeWeight, 6));
-        return this.removalProbabilities.get(lookupKey) || 0;
+        // Map nodeWeight [2, maxLinks * 2] to slider range [1, 5]
+        const maxWeight = this.maxLinks * 2;
+        if (maxWeight <= 2) return 0; // Avoid division by zero
+
+        const normalizedDensity = 1 + (nodeWeight - 2) * (4 / (maxWeight - 2));
+        const clampedDensity = Math.max(1, Math.min(normalizedDensity, 5));
+
+        const lowerKey = Math.floor(clampedDensity);
+        const upperKey = Math.ceil(clampedDensity);
+        const fraction = clampedDensity - lowerKey;
+
+        const lowerVal = this.removalProbabilities.get(lowerKey) || 0;
+        const upperVal = this.removalProbabilities.get(upperKey) || 0;
+
+        // Linear interpolation of slider values
+        const interpolatedSliderValue = lowerVal + fraction * (upperVal - lowerVal);
+
+        if (interpolatedSliderValue <= 0) return 0;
+
+        // Apply logarithmic transformation to the interpolated slider value
+        // Formula: 10^((5/9) * (value - 10))
+        return Math.pow(10, (5 * (interpolatedSliderValue - 10)) / 9);
     }
 
-    updateRemovalProbabilities(map: Map<number, number>) {
-        // Map keys are 2, 3, 4, 5, 6 corresponding to density levels
-        for (const [key, value] of map.entries()) {
-            let probability = 0;
-            if (value > 0) {
-                // Logarithmic scale: value 10 -> 1, value 1 -> 1e-5
-                // Formula: 10^((5/9) * (value - 10))
-                probability = Math.pow(10, (5 * (value - 10)) / 9);
-            }
-            this.removalProbabilities.set(key, probability);
-        }
+    setRemovalProbabilities(map: Map<number, number>) {
+        this.removalProbabilities = map;
     }
 
     removeLink(linkId: number) {
@@ -146,9 +162,9 @@ export class GraphManager {
         return Math.random() < probability;
     }
 
-    resetIfEmpty(maxLinks: number = 100) {
+    resetIfEmpty() {
         if (this.nodes.size === 0) {
-            this.addLinks({ maxLinks });
+            this.addLinks();
         }
     }
 

@@ -30,7 +30,7 @@ let tickSpeed = parseInt(speedSlider.value);
 let linksPerTick = parseInt(linksPerTickInput.value);
 let maxLinks = parseInt(maxLinksInput.value);
 let growthTimeout: number | null = null;
-const manager = new GraphManager(1);
+const manager = new GraphManager({initialLinks: 1, maxLinks: maxLinks});
 
 // Initialize Graph
 const Graph = new ForceGraph3D(elem)
@@ -57,8 +57,8 @@ function tick() {
 }
 
 function performStep() {
-    manager.resetIfEmpty(maxLinks);
-    manager.addLinks({ linkCount: linksPerTick, addNodeProbability: 0.5, maxLinks });
+    manager.resetIfEmpty();
+    manager.addLinks({ linkCount: linksPerTick, addNodeProbability: 0.5 });
     manager.removeLinks();
     Graph.graphData(manager.getGraphData());
     updateStats();
@@ -130,17 +130,18 @@ linksPerTickInput.addEventListener('input', () => {
 
 maxLinksInput.addEventListener('input', () => {
     maxLinks = parseInt(maxLinksInput.value);
+    manager.setMaxLinks(maxLinks);
 });
 
 function updateProbabilities() {
     const probMap = new Map<number, number>();
-    probMap.set(2, parseInt(removeLinkProbLowSlider.value));
-    probMap.set(3, parseInt(removeLinkProbMediumSlider.value));
-    probMap.set(4, parseInt(removeLinkProbHighSlider.value));
-    probMap.set(5, parseInt(removeLinkProbVeryHighSlider.value));
-    probMap.set(6, parseInt(removeLinkProbExtremelyHighSlider.value));
+    probMap.set(1, parseInt(removeLinkProbLowSlider.value));
+    probMap.set(2, parseInt(removeLinkProbMediumSlider.value));
+    probMap.set(3, parseInt(removeLinkProbHighSlider.value));
+    probMap.set(4, parseInt(removeLinkProbVeryHighSlider.value));
+    probMap.set(5, parseInt(removeLinkProbExtremelyHighSlider.value));
 
-    manager.updateRemovalProbabilities(probMap);
+    manager.setRemovalProbabilities(probMap);
 }
 
 const sliders = [
