@@ -1,7 +1,7 @@
 import './style.css';
 // @ts-ignore
 import ForceGraph3D from '3d-force-graph';
-import { GraphManager } from './graphManager';
+import { GraphManager, Node } from './graphManager';
 
 const elem = document.getElementById("three-d-graph")!;
 const generationCountEl = document.getElementById("generation-count")!;
@@ -33,18 +33,40 @@ let maxLinks = parseInt(maxLinksInput.value);
 let growthTimeout: number | null = null;
 const manager = new GraphManager({ initialLinks: 1, maxLinks: maxLinks });
 
+const highlightLinks = new Set();
+
 // Initialize Graph
 const Graph = new ForceGraph3D(elem)
     .backgroundColor('#050505')
-    .nodeColor('color')
     .nodeRelSize(6)
+    .linkWidth(link => highlightLinks.has(link) ? 4 : 2)
+    .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
+    .linkDirectionalParticleWidth(4)
     .linkColor(() => '#efefd9ff')
-    .linkWidth(2)
-    .linkDirectionalParticles(2)
-    .linkDirectionalParticleSpeed(0.005)
     .enableNodeDrag(true)
     .onNodeClick(removeNode)
-    .graphData(manager.getGraphData());
+    .graphData(manager.getGraphData())
+    .onNodeHover((node: any) => {
+        const n = node as Node | null;
+        highlightLinks.clear();
+        if (n) {
+            n.links.forEach(link => highlightLinks.add(link));
+        }
+        updateHighlight();
+    })
+    .onLinkHover(link => {
+        highlightLinks.clear();
+        if (link) {
+            highlightLinks.add(link);
+        }
+        updateHighlight();
+    });
+
+function updateHighlight() {
+    Graph
+        .linkWidth(Graph.linkWidth())
+        .linkDirectionalParticles(Graph.linkDirectionalParticles());
+};
 
 // Update stats initially
 updateStats();
