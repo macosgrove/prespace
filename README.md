@@ -11,9 +11,9 @@ We attempt to visualise such a foundational configuration through a directed gra
 
 ## Features
 
-- **Dynamic Growth**: Adds a new node and link every second automatically.
-- **Interactive Deletion**: Click any node to remove it and its associated links.
-- **Persistent ID Management**: Robust state handling via `GraphManager` to prevent crashes during rapid deletions.
+- **Dynamic Growth**: Randomly adds one or more links between an existing node and a new node, two existing nodes, or two new nodes each generation.
+- **Dynamic Culling**: Each link has a probability of being deleted in each generation. The probabilities of deleting a link depend on the connectivity of the two nodes it joins, and can be adjusted via the UI.
+- **Interactive Graph**: Graph can be rotated, zoomed, or panned. Nodes can be dragged, or deleted via click. Links from a node are highlighted when the node is hovered.
 - **Premium UI**: Dark mode, glassmorphism stats panel, and smooth camera controls.
 
 <img width="1283" height="981" alt="Screenshot 2026-01-02 at 5 39 05 pm" src="https://github.com/user-attachments/assets/d1c6fc7a-7ddc-4659-b225-3b2bef39c828" />
